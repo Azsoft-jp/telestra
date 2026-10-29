@@ -8,6 +8,8 @@ Phase 01のローカルHTTP・DO WebSocket試験は[実装状況](phase-01-progr
 
 資格確認情報の再読込は[履歴v2の試験](phase-01-checkpoint.md)で追加検証した。同一プロセス内のWorker再接続と、子プロセス途中終了による記録保持を区別する。本番KeyProviderを伴う完全な再起動復旧は未検証である。
 
+利用者の認可コード交換からAPIセッションまでを[Mock PKCE試験](phase-01-browser-auth.md)で追加した。SEC-04・SEC-01・CORE-02のprotocol境界を対象とし、ログイン画面、実ブラウザの遷移・CORS、実IdPの合格とは扱わない。
+
 | ID | 合格条件 | 推奨Phase |
 | --- | --- | --- |
 | CORE-01 | Mock Tuner/Storeで権利問題なくend-to-end実行 | 00 |

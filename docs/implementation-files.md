@@ -2,7 +2,7 @@
 
 添付ZIPとの差分。Phase 00、Phase 01、Telestraの名称・導入・公開整備を含む。依存物、検証成果物、Git内部、秘密値、一時状態を除外する。PRIVATE側のファイルは別リポジトリで管理する。
 
-変更6件、追加183件、削除0件。
+変更6件、追加190件、削除0件。
 
 ## 既存ファイルの変更
 
@@ -14,6 +14,14 @@
 - [scripts/validate_package.py](../scripts/validate_package.py)
 
 ## 追加ファイル
+
+- [docs/architecture/decisions/ADR-023-browser-pkce-memory-session.md](../docs/architecture/decisions/ADR-023-browser-pkce-memory-session.md)
+- [docs/phase-01-browser-auth.md](../docs/phase-01-browser-auth.md)
+- [packages/browser-auth/index.ts](../packages/browser-auth/index.ts)
+- [packages/browser-auth/transport.ts](../packages/browser-auth/transport.ts)
+- [packages/browser-auth/package.json](../packages/browser-auth/package.json)
+- [tests/phase01/browser-auth.test.ts](../tests/phase01/browser-auth.test.ts)
+- [tests/phase01/mock-oidc.ts](../tests/phase01/mock-oidc.ts)
 
 - [docs/architecture/decisions/ADR-022-node-process-restart-fixture.md](../docs/architecture/decisions/ADR-022-node-process-restart-fixture.md)
 - [docs/phase-01-process-restart.md](../docs/phase-01-process-restart.md)

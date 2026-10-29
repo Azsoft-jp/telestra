@@ -21,3 +21,8 @@ export declare function WsReceipt(value: unknown): boolean;
 export declare function WsEnvelope(value: unknown): boolean;
 export declare function ControlClaims(value: unknown): boolean;
 export declare function DispatchCommand(value: unknown): boolean;
+export declare function OidcPublicConfig(value: unknown): boolean;
+export declare function OidcIdClaims(value: unknown): boolean;
+export declare function OidcTokenResponse(value: unknown): boolean;
+export declare function OidcCallback(value: unknown): boolean;
+export declare function ApiSession(value: unknown): boolean;

@@ -14,4 +14,6 @@ Lifecycleで接続中の期限前更新とWSS再接続を追加した。旧接�
 
 別のGoプロセスへの資格復元と、Workerの更新成立後のSIGKILLを試験する。旧資格・別鍵・pending履歴からの復元を拒否する。試験資格は親のメモリと専用IPCだけで受け渡し、本番KeyProviderは未実装のままとする。
 
+public clientのS256・state・nonceとメモリ内資格を追加し、Mock IdPの認可コード交換を既存のAPIセッションへ結んだ。権限・失効・別origin・中断・ログアウト未確認・通信上限を検証する。ログイン画面と実IdPは未実装・未検証である。
+
 JWT用途、Schema ID、v1のwire形式と永続履歴は名称変更でも維持する。旧npm名・Go import・内部環境変数は未公開の開発用であり、新しい名称を使う。既存のnpm run mockは継続する。安定版Releaseはまだ作成していない。

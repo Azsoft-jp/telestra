@@ -12,7 +12,11 @@ import type { ControlMap } from "../control-contracts/index.ts";
 import { BoundaryError } from "../contracts/error.ts";
 
 export type IdentityKind =
-  "UserClaims" | "NodeClaims" | "DeviceProof" | "ControlClaims";
+  | "UserClaims"
+  | "NodeClaims"
+  | "DeviceProof"
+  | "ControlClaims"
+  | "OidcIdClaims";
 // 認証失敗の詳細を外部へ出さず、共通の応答へ変換する。
 export function authFailure(): BoundaryError {
   return new BoundaryError("UNAUTHORIZED", "認証情報を確認してください。", 401);
@@ -88,7 +92,11 @@ export async function verifyIdentity<K extends IdentityKind>(
         algorithms: ["EdDSA"],
         currentDate: new Date(options.now * 1000),
         clockTolerance: 0,
-        requiredClaims: ["iat", "exp", "jti", "sub"],
+        // ID Tokenのnonceは認可開始時の値と別途照合する。標準で任意のjtiを必須にしない。
+        requiredClaims:
+          kind === "OidcIdClaims"
+            ? ["iat", "exp", "sub", "nonce"]
+            : ["iat", "exp", "jti", "sub"],
       },
     );
     const claims = validateControl(kind, payload);
