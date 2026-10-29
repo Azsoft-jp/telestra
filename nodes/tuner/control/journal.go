@@ -45,10 +45,12 @@ type journalEntry struct {
 	Result      *Result `json:"result,omitempty"`
 }
 type journalData struct {
-	Version   int                     `json:"version"`
-	Identity  wire.Identity           `json:"identity"`
-	LastEpoch int64                   `json:"lastEpoch"`
-	Entries   map[string]journalEntry `json:"entries"`
+	Version    int                     `json:"version"`
+	Identity   wire.Identity           `json:"identity"`
+	LastEpoch  int64                   `json:"lastEpoch"`
+	Entries    map[string]journalEntry `json:"entries"`
+	Legacy     bool                    `json:"legacy,omitempty"`
+	Enrollment *enrollmentCheckpoint   `json:"enrollment,omitempty"`
 }
 
 // Journalは排他ロックを保持し、別プロセスや並行呼出しによる二重処理を防ぐ。
@@ -85,7 +87,7 @@ func OpenJournal(directory string, identity wire.Identity, capacity int) (*Journ
 		}
 		return nil, ErrJournal
 	}
-	journal := &Journal{directory: directory, lock: lock, capacity: capacity, write: writeJournal, data: journalData{Version: 1, Identity: identity, Entries: map[string]journalEntry{}}}
+	journal := &Journal{directory: directory, lock: lock, capacity: capacity, write: writeJournal, data: journalData{Version: 2, Identity: identity, Entries: map[string]journalEntry{}}}
 	file, err := openJournalFile(filepath.Join(directory, "control.json"), os.O_RDONLY, 0600)
 	if errors.Is(err, os.ErrNotExist) {
 		return journal, nil
@@ -99,13 +101,67 @@ func OpenJournal(directory string, identity wire.Identity, capacity int) (*Journ
 	if statErr != nil || !metadata.Mode().IsRegular() || metadata.Mode().Perm()&0077 != 0 || readErr != nil || closeErr != nil || len(raw) > journalBytes {
 		return fail()
 	}
-	if _, err := wire.Decode(raw, journalBytes); err != nil {
+	decoded, err := wire.Decode(raw, journalBytes)
+	if err != nil {
 		return fail()
 	}
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.DisallowUnknownFields()
 	var data journalData
-	if err := decoder.Decode(&data); err != nil || data.Version != 1 || data.Identity != identity || data.LastEpoch < 0 || data.LastEpoch > 9007199254740991 || data.Entries == nil || len(data.Entries) > capacity {
+	if err := decoder.Decode(&data); err != nil || (data.Version != 1 && data.Version != 2) || data.Identity != identity || data.LastEpoch < 0 || data.LastEpoch > 9007199254740991 || data.Entries == nil || len(data.Entries) > capacity {
+		return fail()
+	}
+	if data.Version == 1 {
+		object, ok := decoded.(map[string]any)
+		if !ok {
+			return fail()
+		}
+		if _, exists := object["enrollment"]; exists {
+			return fail()
+		}
+		if _, exists := object["legacy"]; exists {
+			return fail()
+		}
+		// 既存の命令履歴を保持し、未記録の鍵と資格を推測で補わない。
+		data.Version, data.Legacy = 2, true
+	}
+	object, ok := decoded.(map[string]any)
+	if !ok {
+		return fail()
+	}
+	if _, ok := object["lastEpoch"].(json.Number); !ok {
+		return fail()
+	}
+	if value, exists := object["legacy"]; exists {
+		if _, ok := value.(bool); !ok {
+			return fail()
+		}
+	}
+	if value, exists := object["enrollment"]; exists {
+		enrollment, ok := value.(map[string]any)
+		if !ok || data.Enrollment == nil {
+			return fail()
+		}
+		if _, exists := enrollment["credentialVersion"]; !exists {
+			return fail()
+		}
+		// encoding/jsonがnullをゼロ値へ変換しても、保存状態の型違反として拒否する。
+		for name, value := range enrollment {
+			if name == "credentialVersion" {
+				if _, ok := value.(json.Number); !ok {
+					return fail()
+				}
+			} else {
+				if _, ok := value.(string); !ok {
+					return fail()
+				}
+			}
+		}
+	}
+	if data.Legacy && data.Enrollment != nil && data.Enrollment.Phase == "ready" {
+		return fail()
+	}
+	if data.Enrollment != nil && !data.Enrollment.valid() {
 		return fail()
 	}
 	for id, entry := range data.Entries {
@@ -131,7 +187,7 @@ func (j *Journal) LastEpoch() (int64, error) {
 func (j *Journal) AdvanceEpoch(epoch int64) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
-	if j.closed || j.faulty || epoch <= j.data.LastEpoch || epoch > 9007199254740991 {
+	if j.closed || j.faulty || (j.data.Enrollment != nil && j.data.Enrollment.Phase == "pending") || epoch <= j.data.LastEpoch || epoch > 9007199254740991 {
 		return ErrJournal
 	}
 	data := j.clone()
@@ -143,6 +199,9 @@ func (j *Journal) AdvanceEpoch(epoch int64) error {
 func (j *Journal) Execute(command wire.Envelope, now time.Time, handler func(wire.Envelope) (Result, error)) (Result, bool, error) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
+	if j.data.Enrollment != nil && j.data.Enrollment.Phase == "pending" {
+		return Result{}, false, ErrRecoveryRequired
+	}
 	if j.closed || j.faulty || handler == nil || command.Kind != "command" || (command.Type != "capture.start" && command.Type != "capture.cancel") || command.NodeID != j.data.Identity.NodeID || j.data.Identity.Role != "tuner" || !journalID.MatchString(command.MessageID) || command.Epoch != j.data.LastEpoch || command.IssuedAt > now.Unix() || command.ExpiresAt <= now.Unix() || command.ExpiresAt <= command.IssuedAt || command.ExpiresAt-command.IssuedAt > 30 {
 		return Result{}, false, ErrJournal
 	}
@@ -208,6 +267,10 @@ func (j *Journal) Execute(command wire.Envelope, now time.Time, handler func(wir
 }
 func (j *Journal) clone() journalData {
 	data := j.data
+	if j.data.Enrollment != nil {
+		copy := *j.data.Enrollment
+		data.Enrollment = &copy
+	}
 	data.Entries = make(map[string]journalEntry, len(j.data.Entries))
 	for key, value := range j.data.Entries {
 		data.Entries[key] = value

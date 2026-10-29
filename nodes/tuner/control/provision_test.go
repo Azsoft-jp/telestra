@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -43,7 +44,8 @@ func provisionServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, 
 
 func newProvisionFixture(t *testing.T, f *controlFixture, endpoint string, roots *x509.CertPool) *Provisioner {
 	t.Helper()
-	client, err := NewProvisioner(ProvisionConfig{Endpoint: endpoint, Roots: roots, Identity: f.identity, Verifier: f.verifier, DeviceKey: f.deviceKey, DeviceKeyID: "device-test-key"})
+	journal := openTestJournal(t, filepath.Join(t.TempDir(), "enrollment"), 16)
+	client, err := NewProvisioner(ProvisionConfig{Endpoint: endpoint, Roots: roots, Identity: f.identity, Verifier: f.verifier, DeviceKey: f.deviceKey, DeviceKeyID: "device-test-key", Journal: journal})
 	if err != nil {
 		t.Fatal("参加Clientの構築に失敗")
 	}
@@ -321,8 +323,9 @@ func TestProvisionInputCancellationAndConcurrentRotation(t *testing.T) {
 
 func TestProvisionEndpointAndCertificateBoundary(t *testing.T) {
 	f := newControlFixture(t)
+	journal := openTestJournal(t, filepath.Join(t.TempDir(), "endpoint-state"), 16)
 	for _, endpoint := range []string{"http://example.invalid", "https://name:pass@example.invalid", "https://example.invalid/nodes/join", "https://example.invalid?", "https://example.invalid#fragment", "https://example.invalid/%2f"} {
-		if _, err := NewProvisioner(ProvisionConfig{Endpoint: endpoint, Verifier: f.verifier, Identity: f.identity, DeviceKey: f.deviceKey, DeviceKeyID: "device-key"}); err == nil {
+		if _, err := NewProvisioner(ProvisionConfig{Endpoint: endpoint, Verifier: f.verifier, Identity: f.identity, DeviceKey: f.deviceKey, DeviceKeyID: "device-key", Journal: journal}); err == nil {
 			t.Fatal("不正な接続先を許可した")
 		}
 	}

@@ -1,5 +1,7 @@
 # ADR-015 Goの制御契約と永続履歴
 
+資格確認情報とv1→v2の移行は[ADR-021](ADR-021-node-credential-checkpoint.md)で追加した。以下の初期保存項目の記述と区別し、秘密値を保存しない原則は維持する。
+
 状態はPhase 01のローカル検証向け採用。GoのWSS Transportとの統合は[ADR-016](ADR-016-go-wss-transport.md)で追跡する。実チューナー、実録画、本番の鍵運用は未実装・未検証のまま残す。
 
 ## 契約と署名

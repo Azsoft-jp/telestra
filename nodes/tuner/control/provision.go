@@ -27,6 +27,7 @@ type ProvisionState string
 
 const (
 	NeedsJoin        ProvisionState = "needs-join"
+	NeedsRestore     ProvisionState = "needs-restore"
 	Provisioning     ProvisionState = "provisioning"
 	CredentialReady  ProvisionState = "credential-ready"
 	RecoveryRequired ProvisionState = "recovery-required"
@@ -41,6 +42,7 @@ type ProvisionConfig struct {
 	Identity    wire.Identity
 	DeviceKey   ed25519.PrivateKey
 	DeviceKeyID string
+	Journal     *Journal
 }
 
 // Provisionerは一つの端末を扱う。並行した変更を拒否し、最後に検証した世代より古い応答を受け付けない。
@@ -51,19 +53,35 @@ type Provisioner struct {
 	state       ProvisionState
 	token       string
 	lastVersion int64
+	binding     string
 	now         func() time.Time
 }
 
 // NewProvisionerはHTTPS originだけを許可する。TLS検証を維持し、Proxy、圧縮、リダイレクトを無効にする。
+// 同じ履歴の端末鍵・信頼先を照合し、確認情報があれば資格の復元または再参加を要求する。
 func NewProvisioner(config ProvisionConfig) (*Provisioner, error) {
 	endpoint, err := url.Parse(config.Endpoint)
-	if err != nil || endpoint.Scheme != "https" || endpoint.Hostname() == "" || endpoint.User != nil || (endpoint.EscapedPath() != "" && endpoint.EscapedPath() != "/") || endpoint.RawQuery != "" || endpoint.ForceQuery || strings.Contains(config.Endpoint, "#") || endpoint.Opaque != "" || config.Verifier == nil || config.Identity.Environment != "development" || len(config.DeviceKey) != ed25519.PrivateKeySize {
+	if err != nil || endpoint.Scheme != "https" || endpoint.Hostname() == "" || endpoint.User != nil || (endpoint.EscapedPath() != "" && endpoint.EscapedPath() != "/") || endpoint.RawQuery != "" || endpoint.ForceQuery || strings.Contains(config.Endpoint, "#") || endpoint.Opaque != "" || config.Verifier == nil || config.Identity.Environment != "development" || len(config.DeviceKey) != ed25519.PrivateKeySize || config.Journal == nil {
 		return nil, ErrPolicy
 	}
 	if _, err := wire.SignProof(config.DeviceKey, config.DeviceKeyID, config.Identity, "join", "configuration-check", time.Now()); err != nil {
 		return nil, ErrCredentials
 	}
 	config.Endpoint = "https://" + endpoint.Host
+	config.Journal.mu.Lock()
+	validJournal := !config.Journal.closed && !config.Journal.faulty && config.Journal.data.Identity == config.Identity
+	config.Journal.mu.Unlock()
+	if !validJournal {
+		return nil, ErrJournal
+	}
+	binding, err := credentialBinding(config.Endpoint, config.Verifier, config.Identity, config.DeviceKey, config.DeviceKeyID)
+	if err != nil {
+		return nil, err
+	}
+	checkpoint, exists, err := config.Journal.loadEnrollment(binding)
+	if err != nil {
+		return nil, err
+	}
 	config.DeviceKey = append(ed25519.PrivateKey(nil), config.DeviceKey...)
 	if config.Roots != nil {
 		config.Roots = config.Roots.Clone()
@@ -74,7 +92,14 @@ func NewProvisioner(config ProvisionConfig) (*Provisioner, error) {
 		TLSHandshakeTimeout: 10 * time.Second, ResponseHeaderTimeout: 10 * time.Second,
 		MaxResponseHeaderBytes: 16384, DisableCompression: true, MaxIdleConns: 2, IdleConnTimeout: 30 * time.Second,
 	}
-	return &Provisioner{config: config, http: &http.Client{Transport: transport, Timeout: 10 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, state: NeedsJoin, now: time.Now}, nil
+	state := NeedsJoin
+	if exists {
+		state = NeedsRestore
+		if checkpoint.Phase == "pending" {
+			state = RecoveryRequired
+		}
+	}
+	return &Provisioner{config: config, http: &http.Client{Transport: transport, Timeout: 10 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, state: state, binding: binding, lastVersion: checkpoint.Version, now: time.Now}, nil
 }
 
 // Closeは待機中のHTTP接続を解放する。実行中の操作は渡したContextで中断する。
@@ -110,7 +135,32 @@ func (p *Provisioner) Current() (string, wire.Credential, error) {
 	if err != nil {
 		return "", wire.Credential{}, ErrCredentials
 	}
+	if err := p.config.Journal.checkCredential(p.binding, p.token, credential.Version, false); err != nil {
+		return "", wire.Credential{}, errors.Join(ErrCredentials, err)
+	}
 	return p.token, credential, nil
+}
+
+// RestoreCredentialは外部からメモリへ渡された資格を、最後に確定したhash・世代へ照合する。
+// 取得・保存は行わず、更新途中の旧資格とv1履歴の推測による復元を拒否する。
+func (p *Provisioner) RestoreCredential(token string) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.state == RecoveryRequired {
+		return ErrRecoveryRequired
+	}
+	if p.state == Provisioning {
+		return ErrPolicy
+	}
+	credential, err := p.config.Verifier.VerifyCredential(token, p.config.Identity, p.now())
+	if err != nil || credential.Version != p.lastVersion {
+		return ErrCredentials
+	}
+	if err := p.config.Journal.checkCredential(p.binding, token, credential.Version, false); err != nil {
+		return err
+	}
+	p.token, p.state = token, CredentialReady
+	return nil
 }
 
 // Joinは管理者が発行した一回限りのコードを端末鍵で証明する。結果不明時も自動再送しない。
@@ -147,6 +197,10 @@ func (p *Provisioner) change(ctx context.Context, purpose, code string) (result 
 			p.mu.Unlock()
 			return ErrCredentials
 		}
+		if err := p.config.Journal.checkCredential(p.binding, p.token, credential.Version, false); err != nil {
+			p.mu.Unlock()
+			return err
+		}
 		token, challenge, definition = p.token, credential.TokenID, "RotateNode"
 		exact = credential.Version + 1
 		value = map[string]any{}
@@ -180,6 +234,12 @@ func (p *Provisioner) change(ctx context.Context, purpose, code string) (result 
 		return err
 	}
 	// ここから先の失敗は未実行と推定しない。資格を確定できるまで他の操作へ渡さない。
+	operation, err := p.config.Journal.beginCredential(p.binding, minimum)
+	if err != nil {
+		p.state, p.token = RecoveryRequired, ""
+		p.mu.Unlock()
+		return errors.Join(ErrRecoveryRequired, err)
+	}
 	p.state, p.token = Provisioning, ""
 	p.mu.Unlock()
 	defer func() {
@@ -196,6 +256,9 @@ func (p *Provisioner) change(ctx context.Context, purpose, code string) (result 
 	}
 	if credential.Version <= minimum || (exact != 0 && credential.Version != exact) {
 		return ErrProtocol
+	}
+	if err := p.config.Journal.finishCredential(p.binding, operation, newToken, minimum, credential.Version); err != nil {
+		return err
 	}
 	p.mu.Lock()
 	p.token, p.lastVersion, p.state = newToken, credential.Version, CredentialReady

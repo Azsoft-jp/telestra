@@ -12,3 +12,4 @@
 - [ADR-018-public-private-deployment](ADR-018-public-private-deployment.md)
 - [ADR-019-go-node-provisioning](ADR-019-go-node-provisioning.md)
 - [ADR-020-go-credential-lifecycle](ADR-020-go-credential-lifecycle.md)
+- [ADR-021-node-credential-checkpoint](ADR-021-node-credential-checkpoint.md)

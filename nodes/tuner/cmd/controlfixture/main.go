@@ -97,7 +97,7 @@ func run() (result error) {
 		return tlsMaterial()
 	}
 	endpoint, err := url.Parse(input.Endpoint)
-	if err != nil || (input.Mode != "run" && input.Mode != "provision-run" && input.Mode != "lifecycle-run") || !net.ParseIP(endpoint.Hostname()).IsLoopback() || endpoint.Port() == "" || len(input.RootPEM) > 8192 {
+	if err != nil || (input.Mode != "run" && input.Mode != "provision-run" && input.Mode != "lifecycle-run" && input.Mode != "checkpoint-run") || !net.ParseIP(endpoint.Hostname()).IsLoopback() || endpoint.Port() == "" || len(input.RootPEM) > 8192 {
 		return control.ErrProtocol
 	}
 	roots := x509.NewCertPool()
@@ -135,12 +135,12 @@ func run() (result error) {
 	ctx, cancel := context.WithTimeout(ctx, 90*time.Second)
 	defer cancel()
 	var provisioner *control.Provisioner
-	if input.Mode == "provision-run" || input.Mode == "lifecycle-run" {
+	if input.Mode == "provision-run" || input.Mode == "lifecycle-run" || input.Mode == "checkpoint-run" {
 		// 管理者は公開鍵登録と参加権利の発行だけを担当し、join/rotateの署名とHTTP通信はGoで行う。
 		if input.Credential != "" {
 			return control.ErrProtocol
 		}
-		provisioner, err = control.NewProvisioner(control.ProvisionConfig{Endpoint: "https://" + endpoint.Host, Roots: roots, Verifier: verifier, Identity: input.Identity, DeviceKey: ed25519.NewKeyFromSeed(seed), DeviceKeyID: input.DeviceKeyID})
+		provisioner, err = control.NewProvisioner(control.ProvisionConfig{Endpoint: "https://" + endpoint.Host, Roots: roots, Verifier: verifier, Identity: input.Identity, DeviceKey: ed25519.NewKeyFromSeed(seed), DeviceKeyID: input.DeviceKeyID, Journal: journal})
 		if err != nil {
 			return err
 		}
@@ -155,7 +155,7 @@ func run() (result error) {
 		if err := emit(map[string]any{"state": "joined", "generation": joined.Version}); err != nil {
 			return err
 		}
-		if input.Mode == "provision-run" {
+		if input.Mode == "provision-run" || input.Mode == "checkpoint-run" {
 			if err := provisioner.Rotate(ctx); err != nil {
 				return err
 			}
@@ -175,6 +175,43 @@ func run() (result error) {
 		}
 	} else if input.JoinCode != "" {
 		return control.ErrProtocol
+	}
+	if input.Mode == "checkpoint-run" {
+		// 秘密値は同じプロセスのメモリに保持し、非秘密の履歴だけを閉じて再読込する。
+		before, err := control.NewClient(control.ClientConfig{Transport: transport, Verifier: verifier, Identity: input.Identity, Credential: input.Credential, DeviceKey: ed25519.NewKeyFromSeed(seed), DeviceKeyID: input.DeviceKeyID, Journal: journal, AgentVersion: "phase01-local-fixture"})
+		if err != nil {
+			return err
+		}
+		session, err := before.Dial(ctx)
+		if err != nil {
+			return err
+		}
+		if err := session.Close(); err != nil {
+			return errors.Join(control.ErrSessionClose, err)
+		}
+		if err := journal.Close(); err != nil {
+			return err
+		}
+		restored, err := control.OpenJournal(filepath.Join(directory, "agent-state"), input.Identity, 32)
+		if err != nil {
+			return err
+		}
+		journal = restored
+		provisioner, err = control.NewProvisioner(control.ProvisionConfig{Endpoint: "https://" + endpoint.Host, Roots: roots, Verifier: verifier, Identity: input.Identity, DeviceKey: ed25519.NewKeyFromSeed(seed), DeviceKeyID: input.DeviceKeyID, Journal: journal})
+		if err != nil {
+			return err
+		}
+		defer provisioner.Close()
+		if err := provisioner.RestoreCredential(input.Credential); err != nil {
+			return err
+		}
+		_, credential, err := provisioner.Current()
+		if err != nil {
+			return err
+		}
+		if err := emit(map[string]any{"state": "restored", "generation": credential.Version}); err != nil {
+			return err
+		}
 	}
 	var outputErr error
 	var outcome control.Outcome
