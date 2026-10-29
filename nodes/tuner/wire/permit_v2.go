@@ -138,6 +138,47 @@ func permitNumbers(value any) bool {
 	return true
 }
 
+// 署名対象と固定profileの構造だけを検証する。用途名を受信入力から選ばせない。
+func (v *CapturePermitV2Verifier) verifyCaptureDocument(raw, headerDefinition, claimsDefinition string) ([]byte, error) {
+	if len(raw) > 8192 {
+		return nil, ErrInvalid
+	}
+	parts := strings.Split(raw, ".")
+	if len(parts) != 3 {
+		return nil, ErrInvalid
+	}
+	headerRaw, err := permitDecode(parts[0])
+	if err != nil {
+		return nil, ErrInvalid
+	}
+	headerValue, err := Decode(headerRaw, 1024)
+	if err != nil || Validate(headerDefinition, headerValue) != nil {
+		return nil, ErrInvalid
+	}
+	header, ok := headerValue.(map[string]any)
+	if !ok {
+		return nil, ErrInvalid
+	}
+	key := v.keys[text(header, "kid")]
+	signature, err := permitDecode(parts[2])
+	if err != nil || len(key) != 32 || len(signature) != 64 || !ed25519.Verify(key, []byte(parts[0]+"."+parts[1]), signature) {
+		return nil, ErrInvalid
+	}
+	payload, err := permitDecode(parts[1])
+	if err != nil {
+		return nil, ErrInvalid
+	}
+	value, err := Decode(payload, 8192)
+	if err != nil || !permitNumbers(value) || Validate(claimsDefinition, value) != nil {
+		return nil, ErrInvalid
+	}
+	object, ok := value.(map[string]any)
+	if !ok || text(object, "iss") != v.issuer {
+		return nil, ErrInvalid
+	}
+	return payload, nil
+}
+
 // Verifyは受信JWSのバイト列を検証し、署名だけでは分からない対象・世代・時刻をpolicyと照合する。
 func (v *CapturePermitV2Verifier) Verify(raw string, context PermitV2Context) (VerifiedCapturePermit, error) {
 	deny := VerifiedCapturePermit{}
@@ -149,33 +190,8 @@ func (v *CapturePermitV2Verifier) Verify(raw string, context PermitV2Context) (V
 	if err != nil || Validate("CapturePermitV2Context", contextValue) != nil || len(raw) > 8192 {
 		return deny, ErrInvalid
 	}
-	parts := strings.Split(raw, ".")
-	if len(parts) != 3 {
-		return deny, ErrInvalid
-	}
-	headerRaw, err := permitDecode(parts[0])
+	payload, err := v.verifyCaptureDocument(raw, "CapturePermitV2Header", "CapturePermitV2")
 	if err != nil {
-		return deny, ErrInvalid
-	}
-	headerValue, err := Decode(headerRaw, 1024)
-	if err != nil || Validate("CapturePermitV2Header", headerValue) != nil {
-		return deny, ErrInvalid
-	}
-	header, ok := headerValue.(map[string]any)
-	if !ok {
-		return deny, ErrInvalid
-	}
-	key := v.keys[text(header, "kid")]
-	signature, err := permitDecode(parts[2])
-	if err != nil || len(key) != 32 || len(signature) != 64 || !ed25519.Verify(key, []byte(parts[0]+"."+parts[1]), signature) {
-		return deny, ErrInvalid
-	}
-	payload, err := permitDecode(parts[1])
-	if err != nil {
-		return deny, ErrInvalid
-	}
-	value, err := Decode(payload, 8192)
-	if err != nil || !permitNumbers(value) || Validate("CapturePermitV2", value) != nil {
 		return deny, ErrInvalid
 	}
 	var claims PermitV2Claims

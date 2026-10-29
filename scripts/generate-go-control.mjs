@@ -2,7 +2,12 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-const sources = ["control", "capture-permit", "capture-permit-v2"];
+const sources = [
+  "control",
+  "capture-permit",
+  "capture-permit-v2",
+  "capture-policy-v2",
+];
 const schemaKeys = new Set([
   "$schema",
   "$id",

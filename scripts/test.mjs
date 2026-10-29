@@ -14,7 +14,7 @@ const environment = browser
   ? "isolated Chromium + four loopback TLS origins + memory Mock IdP + local Worker; local self-signed TLS exception; outward page requests denied"
   : phase01
     ? "local-workerd + local-D1 + memory Mock IdP/public-client PKCE + loopback Go WSS/TLS; outward fetch denied"
-    : "local-mock and isolated Capture Permit v2 crypto; no tuner/cloud/real media connection";
+    : "local-mock and isolated Capture Permit/Policy v2 crypto; no tuner/cloud/real media connection";
 const run = new Date().toISOString().replaceAll(":", "-");
 const directory = `artifacts/runs/${label}-${run}`;
 mkdirSync(directory, { recursive: true });
@@ -149,8 +149,8 @@ const report = {
   scope: browser
     ? "Local Chromium popup/PKCE/API fixture over loopback self-signed TLS; WebKit, mobile/PWA, real IdP, production TLS and complete frontend security validation pending"
     : phase01
-      ? "Local HTTP + memory public-client PKCE/API sessions + DO WebSocket + Go loopback WSS/TLS identity, provisioning, rotation, process restart, reconnect, replay and bounded command checks; actual Chromium is recorded separately; full login UI, mobile/PWA, production KeyProvider, deployed IdP, signed capture policy persistence, storage grant enforcement, capture execution and production validation pending"
-      : "Mock contracts and isolated Capture Permit v2 verification; no full security, codec, ARIB, PWA, DR or SLO certification",
+      ? "Local HTTP + memory public-client PKCE/API sessions + DO WebSocket + Go loopback WSS/TLS identity, provisioning, rotation, process restart, reconnect, replay and bounded command checks; actual Chromium is recorded separately; full login UI, mobile/PWA, production KeyProvider, deployed IdP, Node-side policy/permit checkpoints, signed revocation delivery, storage grant enforcement, capture execution and production validation pending"
+      : "Mock contracts and isolated Capture Permit/Policy v2 verification; no full security, codec, ARIB, PWA, DR or SLO certification",
 };
 writeFileSync(
   `artifacts/${label}-results.json`,

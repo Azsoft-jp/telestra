@@ -3,7 +3,7 @@ import { CapturePermitVerifier } from "../../packages/capture-permit/index.ts";
 import { strictJson } from "../../packages/capture-permit/json.ts";
 import type { ControlMap } from "../../packages/control-contracts/index.ts";
 // 試験入口にも1MiB・5秒・読取回数の上限を設け、過大本文を全量確保しない。
-async function readBounded(request: Request): Promise<Uint8Array> {
+export async function readBounded(request: Request): Promise<Uint8Array> {
   if (!request.body) throw new Error("試験本文がありません。");
   const reader = request.body.getReader();
   let timer: ReturnType<typeof setTimeout> | undefined;
