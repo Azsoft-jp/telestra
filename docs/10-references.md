@@ -48,6 +48,15 @@
 - [RFC 9207](https://www.rfc-editor.org/rfc/rfc9207.html)の2.4節。認可応答issuerの照合。
 - [OpenID Connect Core 1.0 errata set 2](https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation)のID Token Validation節。ID Tokenのissuer・audience・署名・nonce・期限。
 
+## popup・ブラウザ試験の追加参照
+
+2026年10月29日に公式仕様と提供元の文書を参照した。[ADR-024](architecture/decisions/ADR-024-auth-popup-fixture.md)でローカルの判断と未確認事項を記録する。
+
+- [HTML Standardのcross-document messaging](https://html.spec.whatwg.org/multipage/web-messaging.html#security-9)。origin・形式・targetOrigin。
+- [Window.open](https://developer.mozilla.org/en-US/docs/Web/API/Window/open)。ユーザー操作とWindowProxy、COOPによる参照の切断。
+- [COOP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy)。popupとnavigationの扱い。
+- [Playwright Library](https://playwright.dev/docs/library)と[ブラウザ導入](https://playwright.dev/docs/browsers)。既存のNode試験と共通の証跡へ接続する。
+
 ## 追加検証
 
 - KonomiTVや字幕ライブラリのライセンス（バイナリ依存物まで）、配布義務。

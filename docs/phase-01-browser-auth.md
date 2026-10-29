@@ -43,3 +43,7 @@ GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off npm run check
 検証はfetchを注入したMock IdPのprotocol試験である。実ブラウザの画面遷移、popup、postMessage、CORS、CSP、PWA、実IdPの挙動は未検証である。全面遷移でメモリを失う実装を完成済みと扱わず、UI側の戻し方とorigin/source検証を追加する必要がある。アクセストークンをメモリへ置く方式にはXSSによる窃取の残リスクがある。
 
 ローカルprofileは固定Ed25519鍵と限定claimsを使い、任意のIdPに対応するものではない。実IdP、client登録、callback URI、対象ブラウザ、JWKS更新、IdP全体の失効を次の入力とする。Nodeの本番KeyProviderとOS復旧、実録画・視聴・字幕・PWAも引き続き未実装または未検証である。
+
+## 後続のwindow・ブラウザ試験
+
+[popupの検証記録](phase-01-popup.md)で、認可結果の復帰、origin/sourceの照合、実ChromiumのCORS・別origin分離を追加した。上記の画面遷移・popupが未検証という記録は追加前の範囲である。現在も実IdP、モバイルPWA、全画面の認証UXを検証済みとは扱わない。

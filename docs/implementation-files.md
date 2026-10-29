@@ -2,7 +2,7 @@
 
 添付ZIPとの差分。Phase 00、Phase 01、Telestraの名称・導入・公開整備を含む。依存物、検証成果物、Git内部、秘密値、一時状態を除外する。PRIVATE側のファイルは別リポジトリで管理する。
 
-変更6件、追加190件、削除0件。
+変更6件、追加208件、削除0件。
 
 ## 既存ファイルの変更
 
@@ -14,6 +14,25 @@
 - [scripts/validate_package.py](../scripts/validate_package.py)
 
 ## 追加ファイル
+
+- [tests/browser/cli.test.ts](../tests/browser/cli.test.ts)
+- [scripts/auth-fixture-child.ts](../scripts/auth-fixture-child.ts)
+- [docs/architecture/decisions/ADR-024-auth-popup-fixture.md](../docs/architecture/decisions/ADR-024-auth-popup-fixture.md)
+- [docs/phase-01-popup.md](../docs/phase-01-popup.md)
+- [apps/web/auth-fixture/auth.css](../apps/web/auth-fixture/auth.css)
+- [apps/web/auth-fixture/callback.html](../apps/web/auth-fixture/callback.html)
+- [apps/web/auth-fixture/callback.ts](../apps/web/auth-fixture/callback.ts)
+- [apps/web/auth-fixture/index.html](../apps/web/auth-fixture/index.html)
+- [apps/web/auth-fixture/main.ts](../apps/web/auth-fixture/main.ts)
+- [packages/browser-auth/callback.ts](../packages/browser-auth/callback.ts)
+- [packages/browser-auth/popup.ts](../packages/browser-auth/popup.ts)
+- [packages/browser-auth/window.ts](../packages/browser-auth/window.ts)
+- [scripts/auth-demo.ts](../scripts/auth-demo.ts)
+- [scripts/fixture-tls.ts](../scripts/fixture-tls.ts)
+- [tests/browser/auth.test.ts](../tests/browser/auth.test.ts)
+- [tests/browser/fixture.ts](../tests/browser/fixture.ts)
+- [tests/browser/tsconfig.json](../tests/browser/tsconfig.json)
+- [tests/phase01/popup.test.ts](../tests/phase01/popup.test.ts)
 
 - [docs/architecture/decisions/ADR-023-browser-pkce-memory-session.md](../docs/architecture/decisions/ADR-023-browser-pkce-memory-session.md)
 - [docs/phase-01-browser-auth.md](../docs/phase-01-browser-auth.md)

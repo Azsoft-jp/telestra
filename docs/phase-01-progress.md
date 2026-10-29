@@ -97,3 +97,7 @@ Goからjoin/rotateを呼び、更新後の資格でWSSへ接続する実装を�
 ## public clientのPKCEとAPIセッション
 
 [利用者認可の追加実装](phase-01-browser-auth.md)で、メモリ内のstate・nonce・S256によるコード交換を既存のBearer APIへ結んだ。上記のPKCE未実装という記述のうち、Mock IdPでのprotocol経路を補った。別originと再読込で資格を引き継がず、失効・権限・通信断・ログアウト未確認を区別する。ログイン画面、実ブラウザの戻し方とCORS、実IdP、本番KeyProviderは引き続き未実装または未検証である。
+
+## 認可結果の画面復帰とChromium
+
+[popupの追加実装](phase-01-popup.md)で、実windowのorigin・sourceを照合し、callbackのURLを消して元の画面へ戻す経路を追加した。上記のブラウザ復帰・CORSが未実装という記録のうち、合成IdPとloopback TLSでのChromium試験を補った。全画面のログインUX、モバイルPWA、実IdP、本番KeyProvider、実環境は引き続き未実装または未検証である。

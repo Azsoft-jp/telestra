@@ -1,4 +1,4 @@
-# Phase 00の契約とMock試験を実行する。デプロイ権限や秘密値を扱う工程は設けない。
+# 契約・Mock・ローカル認証とブラウザの試験を実行する。デプロイ権限や秘密値を扱う工程は設けない。
 name: CI
 on: [push, pull_request, workflow_dispatch]
 permissions:
@@ -40,6 +40,46 @@ jobs:
             artifacts/phase01-results.json
             artifacts/go-results.json
             artifacts/*test-output.txt
+          retention-days: 7
+
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GOTOOLCHAIN: local
+      GOPROXY: "off"
+      GOSUMDB: "off"
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24.22.1"
+          cache: npm
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version: "1.26.10"
+          cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: go mod download && go mod verify
+        env:
+          GOPROXY: https://proxy.golang.org
+          GOSUMDB: sum.golang.org
+      # 固定したPlaywrightに対応するheadless Chromiumだけを取得し、非永続contextで試験する。
+      - run: npx playwright install --with-deps --only-shell chromium
+      # TLS fixtureの初回コンパイルを、ブラウザ試験内の短い待機期限と分ける。
+      - run: mkdir -p artifacts && go build -o artifacts/controlfixture ./nodes/tuner/cmd/controlfixture
+      - run: npm run browser:check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: telestra-auth-browser-evidence
+          path: |
+            artifacts/browser-results.json
+            artifacts/browser-test-output.txt
+            artifacts/auth-browser.png
           retention-days: 7
 
   security:

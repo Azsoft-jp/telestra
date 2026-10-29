@@ -16,4 +16,6 @@ Lifecycleで接続中の期限前更新とWSS再接続を追加した。旧接�
 
 public clientのS256・state・nonceとメモリ内資格を追加し、Mock IdPの認可コード交換を既存のAPIセッションへ結んだ。権限・失効・別origin・中断・ログアウト未確認・通信上限を検証する。ログイン画面と実IdPは未実装・未検証である。
 
+popupでの認可結果復帰と、loopback TLS上の実Chromium試験を追加した。originとWindowProxy、callbackのURL消去、ACK、終了と中断を扱う。合成認証画面を追加し、実IdP・本体UI・PWAは未検証のままとする。
+
 JWT用途、Schema ID、v1のwire形式と永続履歴は名称変更でも維持する。旧npm名・Go import・内部環境変数は未公開の開発用であり、新しい名称を使う。既存のnpm run mockは継続する。安定版Releaseはまだ作成していない。

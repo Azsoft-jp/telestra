@@ -1,0 +1,26 @@
+<!doctype html>
+<!-- 認可結果をURLから消し、固定した元windowへだけ返す。外部素材を読み込まない。 -->
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <link rel="stylesheet" href="/fundamental-button.css" />
+    <link rel="stylesheet" href="/demo.css" />
+    <title>Telestra | 認可結果の確認</title>
+    <script type="module" src="/callback.mjs"></script>
+    <link rel="stylesheet" href="/auth.css" />
+  </head>
+  <body>
+    <main>
+      <h1>認可結果を確認しています</h1>
+      <p id="callback-status" role="status" aria-live="polite">
+        元の画面へ結果を戻しています。
+      </p>
+      <p>この画面には認可コードや資格を表示しません。</p>
+      <button class="fd-button" id="close" type="button">
+        この画面を閉じる
+      </button>
+    </main>
+  </body>
+</html>

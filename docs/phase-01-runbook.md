@@ -41,6 +41,10 @@ Goの再接続・署名・永続履歴試験は`artifacts/go-results.json`と`ar
 
 [public clientの追加試験](phase-01-browser-auth.md)で、認可コード交換から既存のAPIセッションまでを検証する。fetchを注入したMock IdPを使い、実ブラウザの画面遷移やCORSを試験したものではない。クライアントを保持する画面が失われると進行中の認可と資格も失う。秘密値をWeb Storageへ保存して復元する手順は設けない。
 
+## popupと実ブラウザ
+
+[認可結果を返すfixture](phase-01-popup.md)で、windowの同一性と実Chromiumの通信を検証する。追加の導入は固定版Playwrightとheadless Chromiumで、browser:checkへ結果を分ける。自己署名TLSの例外は試験contextだけに限定し、実環境TLSの確認とは扱わない。手動fixtureの起動と終了も同じ文書に記録する。
+
 ## 管理とNodeの境界
 
 資格変更の確認情報は[履歴v2の試験](phase-01-checkpoint.md)を参照する。同一プロセス内の再初期化に加え、[別Goプロセスの復元と更新後の強制終了](phase-01-process-restart.md)も検証する。親のメモリと専用IPCを使う試験であり、秘密値の保管Providerはまだ実装していない。

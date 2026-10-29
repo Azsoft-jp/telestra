@@ -1,0 +1,67 @@
+<!doctype html>
+<!-- 合成IdPとローカルAPIの認証試験用。実サービスのログイン画面ではない。 -->
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Telestra | ローカル認証試験</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/fundamental-button.css" />
+    <link rel="stylesheet" href="/demo.css" />
+    <script type="module" src="/auth.mjs"></script>
+    <link rel="stylesheet" href="/auth.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">本文へ移動</a>
+    <header>
+      <img src="/logo.svg" alt="Telestra" width="225" height="64" /><span
+        class="mode"
+        >LOCAL AUTH FIXTURE</span
+      >
+    </header>
+    <main id="main">
+      <h1>合成IdPでログインを確認する</h1>
+      <aside class="notice">
+        ローカルのMock認証試験です。合成ユーザーだけを使い、実アカウント・実放送・本番Cloudflareへ接続しません。
+      </aside>
+      <section class="panel">
+        <h2>APIセッション</h2>
+        <p
+          id="auth-status"
+          role="status"
+          aria-live="polite"
+          data-state="loading"
+        >
+          公開設定を確認しています。
+        </p>
+        <p id="user-status"></p>
+        <div class="auth-actions">
+          <button id="login" class="fd-button" type="button" disabled>
+            合成ユーザーでログイン（別画面）
+          </button>
+          <button id="cancel" class="fd-button" type="button" disabled>
+            認証を中断
+          </button>
+          <button id="session" class="fd-button" type="button" disabled>
+            セッションを再確認
+          </button>
+          <button id="logout" class="fd-button" type="button" disabled>
+            ログアウト
+          </button>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>この試験の範囲</h2>
+        <p>
+          PKCE、認可結果の送信元、APIの現在の所属・失効を確認します。資格はメモリだけに保持し、再読込や別originではログインし直します。
+        </p>
+        <p>
+          実IdP、モバイルPWA、映像再生は未検証です。自己署名TLSを使うローカル試験で、本番のTLS検証ではありません。
+        </p>
+      </section>
+    </main>
+    <footer>
+      終了すると合成鍵と試験台帳を破棄します。外部へ公開しないでください。
+    </footer>
+  </body>
+</html>

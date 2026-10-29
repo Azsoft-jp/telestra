@@ -4,6 +4,7 @@ import type { ControlMap } from "../control-contracts/index.ts";
 import { verifyIdentity } from "../identity/index.ts";
 import { BoundaryError } from "../contracts/error.ts";
 import { readResponse } from "./transport.ts";
+import { parseCallbackURL } from "./callback.ts";
 
 export type AuthState =
   | "signed-out"
@@ -198,20 +199,7 @@ export class BrowserSession {
         pending.expires <= this.#now()
       )
         throw failure();
-      const url = new URL(callback);
-      if (
-        url.origin + url.pathname !== this.#config.redirectUri ||
-        url.username ||
-        url.password ||
-        url.hash
-      )
-        throw failure();
-      const fields = Object.create(null) as Record<string, string>;
-      for (const [key, value] of url.searchParams) {
-        if (Object.hasOwn(fields, key)) throw failure();
-        fields[key] = value;
-      }
-      const input = validateControl("OidcCallback", fields);
+      const input = parseCallbackURL(callback, this.#config.redirectUri);
       if (
         input.state !== pending.state ||
         input.iss !== this.#config.issuer ||

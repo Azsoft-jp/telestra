@@ -14,7 +14,12 @@
     "types": ["node"],
     "skipLibCheck": false
   },
-  "exclude": ["apps/control/**", "tests/phase01/**"],
+  "exclude": [
+    "apps/control/**",
+    "tests/phase01/**",
+    "tests/browser/**",
+    "scripts/auth-fixture-child.ts"
+  ],
   "include": [
     "apps/**/*.ts",
     "packages/**/*.ts",
