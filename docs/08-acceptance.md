@@ -14,6 +14,8 @@ Phase 01のローカルHTTP・DO WebSocket試験は[実装状況](phase-01-progr
 
 [本文読み取りの記録](phase-01-body-limits.md)で、CORE-02・SEC-10の5秒・8KiB・中断を追加検証する。認証前の負荷、API全体や本番のDoS耐性へ読み替えない。
 
+[Phase 01の条件照合](phase-01-role-audit.md)では、両RoleのGo制御試験と製品Agentの実装を区別する。必要IDがあっても、確定予約の実行や本番の鍵供給まで合格とはしない。
+
 | ID | 合格条件 | 推奨Phase |
 | --- | --- | --- |
 | CORE-01 | Mock Tuner/Storeで権利問題なくend-to-end実行 | 00 |

@@ -151,6 +151,14 @@ func (f *controlFixture) hello(t *testing.T, ctx context.Context, socket *websoc
 		return false
 	}
 	payload := event["payload"].(map[string]any)
+	backend := "synthetic"
+	if f.identity.Role == "encoder" {
+		backend = "encoder"
+	}
+	if payload["nodeRole"] != f.identity.Role || payload["backend"] != backend {
+		t.Error("登録したRoleとBackendを送らなかった")
+		return false
+	}
 	if payload["maxConcurrentJobs"] != json.Number("0") || len(payload["capabilities"].([]any)) != 0 {
 		t.Error("未実装能力を広告した")
 		return false
