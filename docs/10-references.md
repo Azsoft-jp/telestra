@@ -61,6 +61,10 @@
 
 2026年10月29日に[Workersの制限](https://developers.cloudflare.com/workers/platform/limits/)、[Request.signal](https://developers.cloudflare.com/changelog/post/2025-05-22-handle-request-cancellation/)、[ReadableStream](https://developers.cloudflare.com/workers/runtime-apis/streams/readablestream/)を参照した。[ADR-025](architecture/decisions/ADR-025-control-body-deadline.md)でアプリの期限と中断の制約を記録する。
 
+## Capture Permitの提案資料
+
+2026年10月29日に[RFC 7515](https://www.rfc-editor.org/rfc/rfc7515.html)、[RFC 8725](https://www.rfc-editor.org/rfc/rfc8725.html)、[RFC 9864](https://www.rfc-editor.org/rfc/rfc9864.html)、[RFC 8785](https://www.rfc-editor.org/rfc/rfc8785.html)を参照した。[ADR-026](architecture/decisions/ADR-026-capture-permit-v2-proposal.md)はJWSとJCS、用途分離、完全指定アルゴリズムを比較する提案で、採用や製品の準拠を宣言しない。
+
 ## 追加検証
 
 - KonomiTVや字幕ライブラリのライセンス（バイナリ依存物まで）、配布義務。

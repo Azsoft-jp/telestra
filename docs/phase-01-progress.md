@@ -109,3 +109,7 @@ Goからjoin/rotateを呼び、更新後の資格でWSSへ接続する実装を�
 ## 条件照合とEncodeNode役
 
 [Phase 01の条件照合](phase-01-role-audit.md)で、タスク6項目と完了条件をコード・試験へ対応させた。Goの試験構成を両Roleへ対応させ、EncodeNode役の参加・更新・Heartbeat・再接続・別プロセス復元・失効と、録画命令の拒否を確認した。これは共通制御コードの検証であり、EncodeNodeの製品Agent・実変換を追加したものではない。Node起動・本番KeyProvider、実環境、Capture Permitの未決定事項は残る。
+
+## Capture Permitの設計候補
+
+[ADR-026](architecture/decisions/ADR-026-capture-permit-v2-proposal.md)を提案・未採用として追加し、署名形式と認可世代の選択を明示した。現行v1と製品コードは変更せず、合成SchemaとモデルのDESIGN試験で範囲を比較する。署名検証器、予約実行、オフライン録画、canonical公開はまだ実装していない。

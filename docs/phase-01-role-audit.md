@@ -51,3 +51,7 @@ Nodeの本番起動と復旧には、対象OS、鍵・資格の保管と供給Pr
 Capture Permitは[ADR-012](architecture/decisions/ADR-012-contract-discrepancies.md)の質問候補に従い、署名対象、家庭・環境・世代、必須scope、Storage Grant、失効中のオフライン範囲を決める必要がある。既存ドラフトへ暗黙に項目を足さず、互換性と拒否試験を伴う提案として準備する。
 
 今回の手書きコードの変更はGoの試験2ファイルとNodeの試験2ファイルである。条件照合、進捗、受け入れ基準、runbook、変更履歴、[全変更一覧](implementation-files.md)も更新する。本番デプロイ、実IdP、実チューナー、実録画には接続していない。
+
+## Capture Permitの提案
+
+[ADR-026](architecture/decisions/ADR-026-capture-permit-v2-proposal.md)と[候補仕様](proposals/capture-permit-v2/README.md)へ署名形式・世代・失効・オフライン・互換性を具体化した。状態は提案・未採用で、DESIGN試験を実行許可やPhase 02の合格へ読み替えない。

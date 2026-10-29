@@ -18,3 +18,5 @@
 - [ADR-024-auth-popup-fixture](ADR-024-auth-popup-fixture.md)
 
 - [ADR-025-control-body-deadline](ADR-025-control-body-deadline.md)
+
+- [ADR-026-capture-permit-v2-proposal（提案・未採用）](ADR-026-capture-permit-v2-proposal.md)
