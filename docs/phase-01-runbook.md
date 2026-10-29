@@ -39,7 +39,7 @@ Goの再接続・署名・永続履歴試験は`artifacts/go-results.json`と`ar
 
 ## 管理とNodeの境界
 
-資格変更の確認情報は[履歴v2の試験](phase-01-checkpoint.md)を参照する。Worker相互試験の同一プロセス内の再初期化と、子プロセスの途中終了によるpending保持を区別する。秘密値の保管Providerはまだ実装していない。
+資格変更の確認情報は[履歴v2の試験](phase-01-checkpoint.md)を参照する。同一プロセス内の再初期化に加え、[別Goプロセスの復元と更新後の強制終了](phase-01-process-restart.md)も検証する。親のメモリと専用IPCを使う試験であり、秘密値の保管Providerはまだ実装していない。
 
 接続中の期限前更新は[Lifecycle試験](phase-01-lifecycle.md)へ含める。相互試験では更新時刻だけを期限290秒前へ早め、約10秒後の更新を待つ。既定間隔や本番経路の確認とは区別する。
 

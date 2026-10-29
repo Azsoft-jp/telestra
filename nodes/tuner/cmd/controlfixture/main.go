@@ -31,16 +31,17 @@ import (
 )
 
 type request struct {
-	Mode        string           `json:"mode"`
-	Endpoint    string           `json:"endpoint"`
-	RootPEM     string           `json:"rootPEM"`
-	Issuer      string           `json:"issuer"`
-	Keys        []wire.PublicJWK `json:"keys"`
-	Identity    wire.Identity    `json:"identity"`
-	Credential  string           `json:"credential"`
-	JoinCode    string           `json:"joinCode"`
-	PrivateSeed string           `json:"privateSeed"`
-	DeviceKeyID string           `json:"deviceKeyID"`
+	Mode         string           `json:"mode"`
+	Endpoint     string           `json:"endpoint"`
+	RootPEM      string           `json:"rootPEM"`
+	Issuer       string           `json:"issuer"`
+	Keys         []wire.PublicJWK `json:"keys"`
+	Identity     wire.Identity    `json:"identity"`
+	Credential   string           `json:"credential"`
+	JoinCode     string           `json:"joinCode"`
+	PrivateSeed  string           `json:"privateSeed"`
+	DeviceKeyID  string           `json:"deviceKeyID"`
+	CheckpointID string           `json:"checkpointId"`
 }
 
 // 出力先は親試験のパイプに限る。送受信したJWSやライブラリエラーをログへ出さない。
@@ -97,7 +98,7 @@ func run() (result error) {
 		return tlsMaterial()
 	}
 	endpoint, err := url.Parse(input.Endpoint)
-	if err != nil || (input.Mode != "run" && input.Mode != "provision-run" && input.Mode != "lifecycle-run" && input.Mode != "checkpoint-run") || !net.ParseIP(endpoint.Hostname()).IsLoopback() || endpoint.Port() == "" || len(input.RootPEM) > 8192 {
+	if err != nil || (input.Mode != "run" && input.Mode != "provision-run" && input.Mode != "lifecycle-run" && input.Mode != "checkpoint-run" && input.Mode != "persist-run" && input.Mode != "restore-run") || !net.ParseIP(endpoint.Hostname()).IsLoopback() || endpoint.Port() == "" || len(input.RootPEM) > 8192 {
 		return control.ErrProtocol
 	}
 	roots := x509.NewCertPool()
@@ -116,13 +117,28 @@ func run() (result error) {
 	if err != nil || len(seed) != ed25519.SeedSize {
 		return control.ErrCredentials
 	}
-	directory, err := os.MkdirTemp("", "tv-go-control-")
+	// 資格を渡す専用socketをHTTP送信前に検査する。通常ファイルへの出力は拒否する。
+	var credentialPipe net.Conn
+	if input.Mode == "persist-run" {
+		credentialPipe, err = openCredentialPipe(os.NewFile(3, "fixture-credentials"))
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err := credentialPipe.Close(); err != nil {
+				result = errors.Join(result, control.ErrProtocol)
+			}
+		}()
+	}
+	directory, cleanup, err := checkpointDirectory(input.Mode, input.CheckpointID)
 	if err != nil {
-		return control.ErrJournal
+		return err
 	}
 	defer func() {
-		if err := os.RemoveAll(directory); err != nil {
-			result = errors.Join(result, control.ErrJournal)
+		if cleanup {
+			if err := os.RemoveAll(directory); err != nil {
+				result = errors.Join(result, control.ErrJournal)
+			}
 		}
 	}()
 	journal, err := control.OpenJournal(filepath.Join(directory, "agent-state"), input.Identity, 32)
@@ -135,7 +151,7 @@ func run() (result error) {
 	ctx, cancel := context.WithTimeout(ctx, 90*time.Second)
 	defer cancel()
 	var provisioner *control.Provisioner
-	if input.Mode == "provision-run" || input.Mode == "lifecycle-run" || input.Mode == "checkpoint-run" {
+	if input.Mode == "provision-run" || input.Mode == "lifecycle-run" || input.Mode == "checkpoint-run" || input.Mode == "persist-run" {
 		// 管理者は公開鍵登録と参加権利の発行だけを担当し、join/rotateの署名とHTTP通信はGoで行う。
 		if input.Credential != "" {
 			return control.ErrProtocol
@@ -148,14 +164,19 @@ func run() (result error) {
 		if err := provisioner.Join(ctx, input.JoinCode); err != nil {
 			return err
 		}
-		_, joined, err := provisioner.Current()
+		joinedToken, joined, err := provisioner.Current()
 		if err != nil {
 			return err
+		}
+		if credentialPipe != nil {
+			if err := sendCredential(credentialPipe, joinedToken, joined.Version); err != nil {
+				return err
+			}
 		}
 		if err := emit(map[string]any{"state": "joined", "generation": joined.Version}); err != nil {
 			return err
 		}
-		if input.Mode == "provision-run" || input.Mode == "checkpoint-run" {
+		if input.Mode == "provision-run" || input.Mode == "checkpoint-run" || input.Mode == "persist-run" {
 			if err := provisioner.Rotate(ctx); err != nil {
 				return err
 			}
@@ -164,6 +185,11 @@ func run() (result error) {
 				return err
 			}
 			input.Credential = credential
+			if credentialPipe != nil {
+				if err := sendCredential(credentialPipe, credential, claims.Version); err != nil {
+					return err
+				}
+			}
 			if err := emit(map[string]any{"state": "rotated", "generation": claims.Version}); err != nil {
 				return err
 			}
@@ -175,6 +201,24 @@ func run() (result error) {
 		}
 	} else if input.JoinCode != "" {
 		return control.ErrProtocol
+	}
+	if input.Mode == "restore-run" {
+		// 別プロセスへ渡された資格を保存済みの確認情報と照合する。新規参加や自動更新はしない。
+		provisioner, err = control.NewProvisioner(control.ProvisionConfig{Endpoint: "https://" + endpoint.Host, Roots: roots, Verifier: verifier, Identity: input.Identity, DeviceKey: ed25519.NewKeyFromSeed(seed), DeviceKeyID: input.DeviceKeyID, Journal: journal})
+		if err != nil {
+			return err
+		}
+		defer provisioner.Close()
+		if err := provisioner.RestoreCredential(input.Credential); err != nil {
+			return err
+		}
+		_, credential, err := provisioner.Current()
+		if err != nil {
+			return err
+		}
+		if err := emit(map[string]any{"state": "restored", "generation": credential.Version}); err != nil {
+			return err
+		}
 	}
 	if input.Mode == "checkpoint-run" {
 		// 秘密値は同じプロセスのメモリに保持し、非秘密の履歴だけを閉じて再読込する。
@@ -270,7 +314,18 @@ func run() (result error) {
 
 func main() {
 	if err := run(); err != nil {
-		if writeErr := emit(map[string]any{"done": true, "code": "fixture-failed"}); writeErr != nil {
+		code := "fixture-failed"
+		switch {
+		case errors.Is(err, control.ErrRecoveryRequired):
+			code = "recovery-required"
+		case errors.Is(err, control.ErrCredentials):
+			code = "credentials"
+		case errors.Is(err, control.ErrJournal):
+			code = "journal"
+		case errors.Is(err, control.ErrProtocol):
+			code = "protocol"
+		}
+		if writeErr := emit(map[string]any{"done": true, "code": code}); writeErr != nil {
 			os.Exit(1)
 		}
 		os.Exit(1)

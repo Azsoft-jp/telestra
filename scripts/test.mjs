@@ -128,7 +128,7 @@ const report = {
       : { status: "fail", code: "INVALID_EVIDENCE" },
   ),
   scope: phase01
-    ? "Local HTTP + DO WebSocket + Go loopback WSS/TLS identity, reconnect, replay and bounded command checks; Go provisioning/rotation, PKCE flow, deployed IdP, Capture Permit verification and production validation pending"
+    ? "Local HTTP + DO WebSocket + Go loopback WSS/TLS identity, provisioning, rotation, process restart, reconnect, replay and bounded command checks; production KeyProvider, PKCE flow, deployed IdP, Capture Permit verification and production validation pending"
     : "Mock contracts only; no full security, codec, ARIB, PWA, DR or SLO certification",
 };
 writeFileSync(
