@@ -60,11 +60,12 @@ export function scanText(path: string, text: string): Finding[] {
     /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
   )) {
     const domain = match[0].split("@")[1] ?? "";
-    // GitHubが付ける公開noreplyの履歴情報は私的メールと区別する。
+    // GitHubが付ける公開サービス用メールの履歴情報は私的メールと区別する。
     const platformMetadata =
       path === "history:metadata" &&
       (domain === "users.noreply.github.com" ||
-        (domain === "github.com" && match[0].split("@")[0] === "noreply"));
+        (domain === "github.com" &&
+          ["noreply", "support"].includes(match[0].split("@")[0] ?? "")));
     if (platformMetadata) continue;
     if (
       domain.endsWith(".invalid") ||
