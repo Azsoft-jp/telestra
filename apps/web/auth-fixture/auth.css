@@ -1,0 +1,29 @@
+/* 認証操作を狭い画面でも折り返し、Fundamentalの操作・フォーカスを保つ。 */
+:root {
+  --telestra-auth-disabled-bg: #e4ebef;
+  --telestra-auth-disabled-fg: #526976;
+}
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.fd-button {
+  max-width: 100%;
+  height: auto;
+  min-height: 2.25rem;
+  white-space: normal;
+  padding-block: 0.5rem;
+  border-radius: 0;
+}
+#user-status {
+  overflow-wrap: anywhere;
+}
+/* 待機中と利用不可の操作を、押せる主操作と区別して表示する。 */
+.auth-actions .fd-button:disabled {
+  background: var(--telestra-auth-disabled-bg);
+  border-color: var(--telestra-auth-disabled-fg);
+  color: var(--telestra-auth-disabled-fg);
+  opacity: 1;
+  cursor: not-allowed;
+}

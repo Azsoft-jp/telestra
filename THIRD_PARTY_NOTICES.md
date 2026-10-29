@@ -91,6 +91,8 @@ Goのgithub.com/coder/websocket v1.8.15はISCで、[原文](LICENSES/ISC-coder-w
 | json-schema-traverse | 1.0.0 | MIT |
 | kleur | 4.1.5 | MIT |
 | miniflare | 4.20260730.0 | MIT |
+| playwright | 1.64.1 | Apache-2.0 |
+| playwright-core | 1.64.1 | Apache-2.0 |
 | prettier | 3.9.10 | MIT |
 | require-from-string | 2.0.2 | MIT |
 | semver | 7.8.5 | ISC |
@@ -105,4 +107,4 @@ Goのgithub.com/coder/websocket v1.8.15はISCで、[原文](LICENSES/ISC-coder-w
 | youch | 4.1.0-beta.10 | MIT |
 | youch-core | 0.3.3 | MIT |
 
-検査用のGitleaksはMIT、govulncheckはGoプロジェクトのライセンス、TerraformはHashiCorpの配布条件に従う。これらは別途取得するツールであり、Telestraのソース配布へ実行バイナリを含めない。ツールと依存物のバージョン更新時は元の条件も確認する。
+検査用のGitleaksはMIT、govulncheckはGoプロジェクトのライセンス、TerraformはHashiCorpの配布条件に従う。これらは別途取得するツールであり、Telestraのソース配布へ実行バイナリを含めない。PlaywrightはApache-2.0の検証用依存物である。Chromiumと同梱物は取得物のLICENSEに従い、ブラウザのバイナリをソース配布やGo TunerNodeへ含めない。ツールと依存物のバージョン更新時は元の条件も確認する。

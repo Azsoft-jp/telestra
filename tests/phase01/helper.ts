@@ -44,9 +44,11 @@ export async function fixture(
   };
   let egress = 0;
   const options = {
-    // WSS相互試験だけが、メモリ内で作った試験証明書を使用する。
+    // Request.cf補完による依存ツール自身の外部取得も止め、合成値だけを使う。
+    cf: false,
     host: "127.0.0.1",
     port: 0,
+    // WSS相互試験だけが、メモリ内で作った試験証明書を使用する。
     ...(tls
       ? { https: true, httpsCert: tls.certificate, httpsKey: tls.key }
       : {}),

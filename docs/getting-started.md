@@ -25,3 +25,7 @@ npm run check
 成功時もplayable:falseのままである。合成バイトを再構築した証拠を、実Codec・ARIB字幕・視聴成功と解釈しない。
 
 次は[導入モード](installation.md)、[設定](configuration.md)、[困ったとき](troubleshooting.md)へ進む。Minimal以降は計画中で、実チューナーに接続する導入コマンドはまだ提供していない。Docker Composeも未提供である。今回の端末ではDocker daemonが動作しておらず、コンテナ導入を検証していない。
+
+## 開発者向けの認証fixture
+
+[popupとChromiumの検証手順](phase-01-popup.md)では、合成IdPとローカルWorkerで認可結果の復帰を確認できる。固定版Playwrightとheadless Chromiumを使い、自己署名TLSを隔離した試験contextで扱う。通常のDemoとは別の開発者向けfixtureで、実アカウントを使わない。

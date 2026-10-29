@@ -835,6 +835,40 @@
       },
       "required": ["subject", "role", "tenantId", "environment", "expiresAt"],
       "description": "APIが現在の所属と失効を確認した利用者情報。Tokenを含めない。"
+    },
+    "BrowserCallbackMessage": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "認可結果を同じoriginの元windowへ渡す。URLは固定callbackと開始状態でも検証する。",
+      "properties": {
+        "type": {
+          "const": "telestra.auth.callback.v1"
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      },
+      "required": ["type", "url"]
+    },
+    "BrowserCallbackAck": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "元windowが照合した認可の完了だけを返す。資格や失敗の詳細は含めない。",
+      "properties": {
+        "type": {
+          "const": "telestra.auth.complete.v1"
+        },
+        "state": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "outcome": {
+          "enum": ["success", "failed"]
+        }
+      },
+      "required": ["type", "state", "outcome"]
     }
   }
 }

@@ -26,3 +26,5 @@ export declare function OidcIdClaims(value: unknown): boolean;
 export declare function OidcTokenResponse(value: unknown): boolean;
 export declare function OidcCallback(value: unknown): boolean;
 export declare function ApiSession(value: unknown): boolean;
+export declare function BrowserCallbackMessage(value: unknown): boolean;
+export declare function BrowserCallbackAck(value: unknown): boolean;

@@ -295,5 +295,10 @@ export type ControlMap = {
 "tenantId": string;
 "environment": "development";
 "expiresAt": number; };
+"BrowserCallbackMessage": { "type": "telestra.auth.callback.v1";
+"url": string; };
+"BrowserCallbackAck": { "type": "telestra.auth.complete.v1";
+"state": string;
+"outcome": "success" | "failed"; };
 };
 export type NodeEnvelope = { [K in keyof NodePayloadMap]: Omit<NodeEnvelopeBase, "type" | "payload"> & { type: K; payload: NodePayloadMap[K] } }[keyof NodePayloadMap];

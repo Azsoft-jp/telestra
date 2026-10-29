@@ -10,6 +10,8 @@ Phase 01のローカルHTTP・DO WebSocket試験は[実装状況](phase-01-progr
 
 利用者の認可コード交換からAPIセッションまでを[Mock PKCE試験](phase-01-browser-auth.md)で追加した。SEC-04・SEC-01・CORE-02のprotocol境界を対象とし、ログイン画面、実ブラウザの遷移・CORS、実IdPの合格とは扱わない。
 
+[popupとChromiumの記録](phase-01-popup.md)で、SEC-04・CORE-02とauth fixtureのUX-08を追加した。UIの一部、loopback TLS、合成IdPの範囲であり、Phase 05全体や実IdPの合格ではない。
+
 | ID | 合格条件 | 推奨Phase |
 | --- | --- | --- |
 | CORE-01 | Mock Tuner/Storeで権利問題なくend-to-end実行 | 00 |
