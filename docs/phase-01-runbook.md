@@ -39,6 +39,8 @@ Goの再接続・署名・永続履歴試験は`artifacts/go-results.json`と`ar
 
 ## 管理とNodeの境界
 
+接続中の期限前更新は[Lifecycle試験](phase-01-lifecycle.md)へ含める。相互試験では更新時刻だけを期限290秒前へ早め、約10秒後の更新を待つ。既定間隔や本番経路の確認とは区別する。
+
 Goの参加・資格更新も同じloopback TLSの試験へ含める。応答喪失時の隔離、管理者による再参加、サイズ・署名・世代・中断の拒否条件は[資格更新の記録](phase-01-provisioning.md)を参照する。
 
 Workerには`development`以外を拒否するガードがあり、本番用のデプロイ設定は提供していない。手動起動で本番のTokenや鍵を設定せず、試験fixtureを利用する。

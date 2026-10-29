@@ -61,6 +61,7 @@ function tlsMaterial(): { certificate: string; key: string } {
 }
 
 interface Progress {
+  rotations?: number;
   generation?: number;
   state?: string;
   attempt?: number;
@@ -76,6 +77,7 @@ async function agent(
   enrolled: Pick<Enrolled, "target"> & {
     credential?: Enrolled["credential"];
     joinCode?: string;
+    lifecycle?: boolean;
   },
   certificate: string,
 ) {
@@ -133,6 +135,7 @@ async function agent(
             (field) =>
               ![
                 "state",
+                "rotations",
                 "generation",
                 "attempt",
                 "done",
@@ -151,7 +154,11 @@ async function agent(
   });
   child.stdin.end(
     JSON.stringify({
-      mode: enrolled.joinCode ? "provision-run" : "run",
+      mode: enrolled.lifecycle
+        ? "lifecycle-run"
+        : enrolled.joinCode
+          ? "provision-run"
+          : "run",
       endpoint: endpoint.toString(),
       rootPEM: certificate,
       issuer: context.bindings.TELESTRA_CONTROL_ISSUER,
@@ -213,6 +220,103 @@ async function agent(
     },
   };
 }
+
+scenario(
+  "NODE-02",
+  "go-credential-lifecycle-renews-and-resumes",
+  "loopback-tls-workerd-go-lifecycle-v1",
+  "Goが旧接続を閉じて資格を更新し、新世代で再接続して台帳を保持し、失効時は停止する",
+  async () => {
+    const tls = tlsMaterial();
+    const context = await fixture(tls);
+    let node: Awaited<ReturnType<typeof agent>> | undefined;
+    try {
+      const target = await device("tuner-go-lifecycle-01");
+      const operator = await context.mint("operator-local");
+      const recorder = await context.mint("recorder-local");
+      const reservation = {
+        reservationId: "reservation-go-renew-01",
+        serviceKey: "service-demo-01",
+        startsAt: new Date((context.now() + 600) * 1000).toISOString(),
+        endsAt: new Date((context.now() + 1200) * 1000).toISOString(),
+      };
+      assert.equal(
+        (
+          await context.browser("/reservations", recorder, {
+            method: "POST",
+            body: reservation,
+          })
+        ).status,
+        202,
+      );
+      assert.equal((await context.register(target, operator)).status, 201);
+      const joinCode = await context.challenge(target, operator);
+      node = await agent(
+        context,
+        { target, joinCode, lifecycle: true },
+        tls.certificate,
+      );
+      const joined = await node.wait((r) => r.state === "joined");
+      await node.wait(
+        (r) => r.state === "connected" && r.generation === joined.generation,
+      );
+      const renewed = await node.wait(
+        (r) =>
+          r.state === "connected" &&
+          r.generation === (joined.generation ?? 0) + 1,
+        15_000,
+      );
+      assert.equal(renewed.rotations, 1);
+      assert.equal(renewed.attempt, 2);
+      const row = await context.database
+        .prepare(
+          "SELECT credential_version,session_epoch FROM nodes WHERE node_id=?",
+        )
+        .bind(target.nodeId)
+        .first<{ credential_version: number; session_epoch: number }>();
+      assert.deepEqual(row, {
+        credential_version: renewed.generation,
+        session_epoch: 2,
+      });
+      const response = await context.browser(
+        `/reservations/${reservation.reservationId}`,
+        recorder,
+      );
+      assert.equal(response.status, 200);
+      assert.equal(
+        ((await response.json()) as { state: string }).state,
+        "scheduled",
+      );
+      assert.equal(
+        (
+          await context.browser(`/nodes/${target.nodeId}/revoke`, operator, {
+            method: "POST",
+            body: {},
+          })
+        ).status,
+        200,
+      );
+      const done = await node.wait((r) => r.done === true);
+      assert.equal(done.code, "credentials");
+      assert.equal(done.rotations, 1);
+      assert.equal(done.epoch, 2);
+      const count = await context.database
+        .prepare(
+          "SELECT count(*) AS count FROM identity_audit WHERE node_id=? AND action='node.rotate'",
+        )
+        .bind(target.nodeId)
+        .first<{ count: number }>();
+      assert.equal(count?.count, 1);
+      assert.equal(context.egress, 0);
+    } finally {
+      try {
+        await node?.close();
+      } finally {
+        await context.close();
+      }
+    }
+  },
+);
 
 scenario(
   "NODE-01",

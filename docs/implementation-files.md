@@ -2,7 +2,7 @@
 
 添付ZIPとの差分。Phase 00、Phase 01、Telestraの名称・導入・公開整備を含む。依存物、検証成果物、Git内部、秘密値、一時状態を除外する。PRIVATE側のファイルは別リポジトリで管理する。
 
-変更6件、追加168件、削除0件。
+変更6件、追加172件、削除0件。
 
 ## 既存ファイルの変更
 
@@ -14,6 +14,11 @@
 - [scripts/validate_package.py](../scripts/validate_package.py)
 
 ## 追加ファイル
+
+- [docs/architecture/decisions/ADR-020-go-credential-lifecycle.md](../docs/architecture/decisions/ADR-020-go-credential-lifecycle.md)
+- [docs/phase-01-lifecycle.md](../docs/phase-01-lifecycle.md)
+- [nodes/tuner/control/lifecycle.go](../nodes/tuner/control/lifecycle.go)
+- [nodes/tuner/control/lifecycle_test.go](../nodes/tuner/control/lifecycle_test.go)
 
 - [docs/architecture/decisions/ADR-019-go-node-provisioning.md](../docs/architecture/decisions/ADR-019-go-node-provisioning.md)
 - [docs/phase-01-provisioning.md](../docs/phase-01-provisioning.md)

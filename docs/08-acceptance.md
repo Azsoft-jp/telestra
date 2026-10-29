@@ -4,7 +4,7 @@
 
 Phase 00のローカルMock実行結果は[検証報告](phase-00-report.md)を参照する。`CORE-01/02`と合成入力の`MED-01`を対象とし、下表の後続Phaseの試験結果には読み替えない。
 
-Phase 01のローカルHTTP・DO WebSocket試験は[実装状況](phase-01-progress.md)に記録する。`NODE-01`、`SEC-01/02/03/04`のローカル境界と、`NODE-02`のサーバー側再開・無通信切断を検証した。Goの署名と永続履歴は[ADR-015](architecture/decisions/ADR-015-go-wire-and-command-journal.md)の範囲で検証した。GoのループバックTLSによるWSS接続・再接続は[ADR-016](architecture/decisions/ADR-016-go-wss-transport.md)、参加・資格更新は[追加のTLS相互試験](phase-01-provisioning.md)で検証した。常駐中の自動更新、確定予約の実行、実IdP、実環境WSSは未検証で、Phase 01全体は未完了である。
+Phase 01のローカルHTTP・DO WebSocket試験は[実装状況](phase-01-progress.md)に記録する。`NODE-01`、`SEC-01/02/03/04`のローカル境界と、`NODE-02`のサーバー側再開・無通信切断を検証した。Goの署名と永続履歴は[ADR-015](architecture/decisions/ADR-015-go-wire-and-command-journal.md)の範囲で検証した。GoのループバックTLSによるWSS接続・再接続は[ADR-016](architecture/decisions/ADR-016-go-wss-transport.md)、参加・資格更新は[追加のTLS相互試験](phase-01-provisioning.md)、接続中の更新は[Lifecycleの加速試験](phase-01-lifecycle.md)で検証した。既定間隔の長時間運転、確定予約の実行、実IdP、実環境WSSは未検証で、Phase 01全体は未完了である。
 
 | ID | 合格条件 | 推奨Phase |
 | --- | --- | --- |
