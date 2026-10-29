@@ -1,4 +1,4 @@
-// 未採用のPermit候補の関係だけを評価する。署名検証器・録画許可・実行APIではない。
+// 未実装の録画実行条件とStorage Scopeの関係だけを評価する。実行APIや暗号検証器ではない。
 import { readFileSync } from "node:fs";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { fullFormats } from "ajv-formats/dist/formats.js";
@@ -30,7 +30,7 @@ export interface CandidatePolicy {
   captureEarliest: number;
   captureLatest: number;
   maxOfflineSeconds: number;
-  // 接続資格の世代は別の認証機構が扱う。Permitの失効条件へ暗黙に流用しない候補。
+  // 接続資格の世代は別の認証機構が扱う。Permitの失効条件へ暗黙に流用しない。
   credentialVersion: number;
   controlOnline: boolean;
   uploadAvailable: boolean;
@@ -48,6 +48,15 @@ for (const [name, format] of Object.entries(fullFormats))
 const root = new URL(
   "../../docs/proposals/capture-permit-v2/",
   import.meta.url,
+);
+// 採用したclaimsを正本として登録し、提案資料側の複製による契約のずれを防ぐ。
+ajv.addSchema(
+  JSON.parse(
+    readFileSync(
+      new URL("../../contracts/capture-permit-v2.schema.json", import.meta.url),
+      "utf8",
+    ),
+  ) as object,
 );
 const claimsSchema = ajv.compile<Candidate>(
   JSON.parse(

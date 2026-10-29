@@ -15,3 +15,7 @@
 Phase 01のDB方針はD1第一実装を維持する。Durable Objectsの一時メモリを正本にせず、予約intent、attempt、冪等キー、公開hashを永続化する。具体的なテーブル、トランザクション、移行・復元方式はまだ実装していない。
 
 これらは質問候補であり、Phase 00のMock検証を進めるために回答を必須とはしない。実認証・実録画・本番公開へ進む前に決定と否定テストを追加する。
+
+## Capture Permitの判断更新
+
+ユーザー回答により、[ADR-026](ADR-026-capture-permit-v2-proposal.md)でCompact JWS v2と認可世代の分離を採用した。旧v1は維持し、独立したv2検証器を追加した。署名付きpolicy・失効・キャッシュの永続化、Storage Grant、オフライン録画実行は引き続き未実装である。

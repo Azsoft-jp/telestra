@@ -2,7 +2,7 @@
 
 添付ZIPとの差分。Phase 00、Phase 01、Telestraの名称・導入・公開整備を含む。依存物、検証成果物、Git内部、秘密値、一時状態を除外する。PRIVATE側のファイルは別リポジトリで管理する。
 
-変更6件、追加223件、削除0件。
+変更6件、追加235件、削除0件。
 
 ## 既存ファイルの変更
 
@@ -14,6 +14,19 @@
 - [scripts/validate_package.py](../scripts/validate_package.py)
 
 ## 追加ファイル
+
+- [contracts/capture-permit-v2.schema.json](../contracts/capture-permit-v2.schema.json)
+- [docs/capture-permit-v2-verification.md](../docs/capture-permit-v2-verification.md)
+- [nodes/tuner/cmd/permitfixture/main.go](../nodes/tuner/cmd/permitfixture/main.go)
+- [nodes/tuner/wire/permit_v2.go](../nodes/tuner/wire/permit_v2.go)
+- [nodes/tuner/wire/permit_v2_test.go](../nodes/tuner/wire/permit_v2_test.go)
+- [packages/capture-permit/index.ts](../packages/capture-permit/index.ts)
+- [packages/capture-permit/json.ts](../packages/capture-permit/json.ts)
+- [tests/capture-permit.test.ts](../tests/capture-permit.test.ts)
+- [tests/fixtures/permit-cases.ts](../tests/fixtures/permit-cases.ts)
+- [tests/fixtures/permit-worker.ts](../tests/fixtures/permit-worker.ts)
+- [tests/fixtures/permit.ts](../tests/fixtures/permit.ts)
+- [tests/phase01/capture-permit.test.ts](../tests/phase01/capture-permit.test.ts)
 
 - [docs/architecture/decisions/ADR-026-capture-permit-v2-proposal.md](../docs/architecture/decisions/ADR-026-capture-permit-v2-proposal.md)
 - [docs/proposals/capture-permit-v2/README.md](../docs/proposals/capture-permit-v2/README.md)

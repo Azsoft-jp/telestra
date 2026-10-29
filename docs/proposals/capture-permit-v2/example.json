@@ -1,7 +1,7 @@
 {
-  "status": "proposed-not-adopted",
+  "status": "partial-design-adopted-runtime-disabled",
   "runtimeEnabled": false,
-  "description": "合成した未署名の候補。録画許可として利用できない。",
+  "description": "署名形式と世代分離は採用済み。合成した未署名claimsと未実装の実行条件を示し、録画許可として利用できない。",
   "claims": {
     "schemaVersion": 2,
     "iss": "https://control.example.invalid",

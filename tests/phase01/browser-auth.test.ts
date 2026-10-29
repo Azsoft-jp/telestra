@@ -288,10 +288,11 @@ scenario(
     const context = await fixture();
     try {
       const provider = mockOidc(context);
-      let now = context.now();
+      // Mock IdPと同じ実時計を使い、期限切れの確認時だけ差分を加える。固定時計は秒境界で正常なiatを拒否してしまう。
+      let offsetSeconds = 0;
       const client = new BrowserSession(provider.config, {
         fetch: provider.fetch,
-        now: () => now,
+        now: () => context.now() + offsetSeconds,
       });
       await client.complete(provider.authorize(await client.begin()));
       await assert.rejects(
@@ -325,7 +326,7 @@ scenario(
         .run();
       await client.complete(provider.authorize(await client.begin()));
       const requests = provider.apiRequests;
-      now += 601;
+      offsetSeconds += 601;
       assert.equal(client.snapshot.state, "expired");
       await assert.rejects(client.session());
       assert.equal(

@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.example.invalid/telestra/v2/capture-permit-v2.schema.json",
+  "title": "Capture Permit v2の署名対象claims",
+  "description": "Compact JWS専用の構造。署名・信頼済みpolicy・期限の照合を別途必須とし、構造検証だけでは録画を許可しない。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "iss",
+    "aud",
+    "sub",
+    "jti",
+    "iat",
+    "nbf",
+    "exp",
+    "tenantId",
+    "environment",
+    "nodeId",
+    "nodeRole",
+    "authorizationEpoch",
+    "assignmentEpoch",
+    "reservationId",
+    "reservationRevision",
+    "recordingId",
+    "attemptId",
+    "backendId",
+    "serviceKey",
+    "captureScope",
+    "offlineAllowedUntil",
+    "spoolMaxBytes",
+    "storageScopeId"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 2,
+      "description": "v2専用。現行v1の制御命令とは交換しない。"
+    },
+    "iss": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "HTTPS発行者との完全一致を検証器で確認する。汎用URI形式の同値性に依存せず、URLから鍵を取得しない。"
+    },
+    "aud": {
+      "const": "telestra-tuner-capture",
+      "description": "録画許可専用。利用者APIやNode接続の資格へ転用しない。"
+    },
+    "sub": {
+      "$ref": "#/$defs/id",
+      "description": "対象Node。nodeIdと信頼済みpolicyの両方へ一致させる。"
+    },
+    "jti": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$",
+      "description": "不変のPermit ID。コマンドの配送IDとは分ける。"
+    },
+    "iat": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "description": "発行時刻。NumericDateの整数秒。"
+    },
+    "nbf": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "description": "この許可が有効になる時刻。更新でも予約の許可期間内に拘束する。"
+    },
+    "exp": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "description": "録画を継続できる期限。NumericDateの整数秒。"
+    },
+    "tenantId": {
+      "$ref": "#/$defs/id",
+      "description": "対象家庭。Nodeの信頼済み構成と照合する。"
+    },
+    "environment": {
+      "enum": ["development", "staging", "production"],
+      "description": "対象環境。この契約はデプロイを許可するものではない。"
+    },
+    "nodeId": {
+      "$ref": "#/$defs/id",
+      "description": "対象Node。subと登録主体の両方へ一致させる。"
+    },
+    "nodeRole": {
+      "const": "tuner",
+      "description": "Tuner役専用。EncodeNodeの資格として使わない。"
+    },
+    "authorizationEpoch": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "失効・再認可の世代。通常のCredential更新とは分ける。"
+    },
+    "assignmentEpoch": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "割当と許可内容の世代。許可更新で進め、同じ実行中attemptと物理再試行を区別する。"
+    },
+    "reservationId": {
+      "$ref": "#/$defs/id",
+      "description": "予約intentの識別子。"
+    },
+    "reservationRevision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "この許可を作った予約の版。"
+    },
+    "recordingId": {
+      "$ref": "#/$defs/id",
+      "description": "論理録画の識別子。"
+    },
+    "attemptId": {
+      "$ref": "#/$defs/id",
+      "description": "不変の録画試行。別Nodeへ再割当すると別IDにする。"
+    },
+    "backendId": {
+      "$ref": "#/$defs/id",
+      "description": "事前構成済みBackendの識別子。URLではない。"
+    },
+    "serviceKey": {
+      "$ref": "#/$defs/id",
+      "description": "録画対象サービスの識別子。Backendとの対応は別途検証する。"
+    },
+    "captureScope": {
+      "enum": ["service-filtered", "multiplex"],
+      "description": "必須の保存範囲。multiplexへの暗黙の拡大を許可しない。"
+    },
+    "offlineAllowedUntil": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "description": "分断中に録画を続けられる期限。exp以下とする。"
+    },
+    "spoolMaxBytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "description": "Nodeが予約した枠を越えられないスプール上限。0はオフライン実行不可。"
+    },
+    "storageScopeId": {
+      "$ref": "#/$defs/id",
+      "description": "原本書込の論理権限。短命Upload Grantの本文やURLではない。"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    }
+  }
+}

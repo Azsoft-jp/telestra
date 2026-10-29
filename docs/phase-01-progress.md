@@ -26,7 +26,7 @@ D1には予約intentと合成した録画試行情報を保存する。予約API
 
 接続制御は[ADR-014](architecture/decisions/ADR-014-local-control-channel.md)で具体化した。DOは接続と有限の待ち行列を担当し、再接続時にD1の接続世代を進める。旧接続、偽造、Replay、異なる家庭・環境・資格世代を拒否する。能力登録とHeartbeatを検証し、未ACK命令は保存後に送信する。同じ資格世代の再接続では、hello後に同じ命令IDで再送する。未ACK8件、履歴32件・64KiBを上限とし、滞留を無制限に増やさない。
 
-制御はEd25519のJWSを使用し、型別payloadと外側の署名を検証する。capture.start/cancelの配送を扱うが、Capture Permit内部の暗号検証・媒体処理は未実装である。試験Nodeはnot implementedを返し、録画完了を装わない。
+制御はEd25519のJWSを使用し、型別payloadと外側の署名を検証する。capture.start/cancelの配送を扱うが、現行v1のCapture Permit検証・媒体処理は未実装である。別契約のv2検証器は追加したが、制御命令へ適用していない。試験Nodeはnot implementedを返し、録画完了を装わない。
 
 GoのRunnerは総試行数を既定8回、待機を最大30秒に制限する。指数backoffとjitterを使い、資格・プロトコルの失敗では再試行しない。中断と接続解放の失敗も処理する。[ADR-016](architecture/decisions/ADR-016-go-wss-transport.md)に従い、WSS Transportと受信ループへ接続した。TLS検証、リダイレクト拒否、16KiB上限、受領待ちの上限と期限、中断を扱う。helloの受領通知を確認してから接続成功とし、命令は署名検証と履歴を通す。
 
@@ -110,6 +110,6 @@ Goからjoin/rotateを呼び、更新後の資格でWSSへ接続する実装を�
 
 [Phase 01の条件照合](phase-01-role-audit.md)で、タスク6項目と完了条件をコード・試験へ対応させた。Goの試験構成を両Roleへ対応させ、EncodeNode役の参加・更新・Heartbeat・再接続・別プロセス復元・失効と、録画命令の拒否を確認した。これは共通制御コードの検証であり、EncodeNodeの製品Agent・実変換を追加したものではない。Node起動・本番KeyProvider、実環境、Capture Permitの未決定事項は残る。
 
-## Capture Permitの設計候補
+## Capture Permit v2の署名検証
 
-[ADR-026](architecture/decisions/ADR-026-capture-permit-v2-proposal.md)を提案・未採用として追加し、署名形式と認可世代の選択を明示した。現行v1と製品コードは変更せず、合成SchemaとモデルのDESIGN試験で範囲を比較する。署名検証器、予約実行、オフライン録画、canonical公開はまだ実装していない。
+[ADR-026](architecture/decisions/ADR-026-capture-permit-v2-proposal.md)で、ユーザーが選択したCompact JWS v2と世代分離を採用した。[検証器と試験](capture-permit-v2-verification.md)を追加し、Go・Node.js・実workerdで署名と対象・世代・時刻を照合する。旧v1の制御命令は維持する。DESIGN試験の実行モデル、署名付きpolicyの永続化、Storage Grant、予約実行、オフライン録画、canonical公開は未実装である。

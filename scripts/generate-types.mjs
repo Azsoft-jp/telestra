@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const names = {
   "node-envelope": "NodeEnvelopeBase",
   "capture-permit": "CapturePermit",
+  "capture-permit-v2": "CapturePermitV2",
   "deployment-profile": "DeploymentProfile",
   "recording-manifest": "RecordingManifest",
   "mock-capture": "MockCapture",
