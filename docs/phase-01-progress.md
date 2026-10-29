@@ -117,3 +117,7 @@ Goからjoin/rotateを呼び、更新後の資格でWSSへ接続する実装を�
 ## Node認可世代の保存
 
 [ADR-027](architecture/decisions/ADR-027-node-authorization-epoch.md)で、認可世代をCredential世代と別にD1へ保存する。[移行と境界試験](node-authorization-epoch.md)では通常rotateによる維持、再参加・失効による進行、上限、書込失敗、競合、再起動を確認する。これはpolicyの配信・Nodeキャッシュや実録画を有効にする変更ではない。
+
+## 署名付きpolicyの発行・取得
+
+[ADR-028](architecture/decisions/ADR-028-signed-capture-policy.md)と[発行・取得の記録](signed-capture-policy.md)で、D1の確定した割当・現在のNode/予約/所有者から署名し、Goが端末証明付きHTTPSで取得・検証する。通常の予約はrevision 0のままで、自動で確定や割当を行わない。Nodeの確定保存、オフライン復元、Storage Grant、実録画は引き続き未実装である。

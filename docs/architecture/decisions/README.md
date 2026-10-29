@@ -22,3 +22,5 @@
 - [ADR-026-capture-permit-v2-proposal（署名形式・世代分離を採用）](ADR-026-capture-permit-v2-proposal.md)
 
 - [ADR-027-node-authorization-epoch（ローカル実装向け採用）](ADR-027-node-authorization-epoch.md)
+
+- [ADR-028-signed-capture-policy（ローカル実装向け採用）](ADR-028-signed-capture-policy.md)

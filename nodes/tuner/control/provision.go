@@ -47,14 +47,15 @@ type ProvisionConfig struct {
 
 // Provisionerは一つの端末を扱う。並行した変更を拒否し、最後に検証した世代より古い応答を受け付けない。
 type Provisioner struct {
-	config      ProvisionConfig
-	http        *http.Client
-	mu          sync.Mutex
-	state       ProvisionState
-	token       string
-	lastVersion int64
-	binding     string
-	now         func() time.Time
+	config         ProvisionConfig
+	http           *http.Client
+	mu             sync.Mutex
+	state          ProvisionState
+	policyFetching bool
+	token          string
+	lastVersion    int64
+	binding        string
+	now            func() time.Time
 }
 
 // NewProvisionerはHTTPS originだけを許可する。TLS検証を維持し、Proxy、圧縮、リダイレクトを無効にする。

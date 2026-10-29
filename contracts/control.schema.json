@@ -268,7 +268,7 @@
           "pattern": "^[A-Za-z0-9_.:-]{3,128}$"
         },
         "purpose": {
-          "enum": ["join", "rotate", "connect"]
+          "enum": ["join", "rotate", "connect", "capture-policy"]
         },
         "challengeHash": {
           "type": "string",
@@ -1069,6 +1069,93 @@
         }
       },
       "description": "呼出元が確認済みのpolicy・時計。受信Permitから期待値を補ってはならない。署名付きpolicyの取得・永続化は別途必要。"
+    },
+    "CapturePolicyV2": {
+      "$ref": "https://schema.example.invalid/telestra/v2/capture-policy-v2.schema.json",
+      "description": "独立したpolicy用署名。v1の制御命令には適用しない。"
+    },
+    "CapturePolicyV2Header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alg", "typ", "kid"],
+      "properties": {
+        "alg": {
+          "const": "Ed25519"
+        },
+        "typ": {
+          "const": "telestra-capture-policy-v2+jwt"
+        },
+        "kid": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{3,128}$"
+        }
+      },
+      "description": "policy専用の固定header。署名鍵のURLや未知拡張を拒否する。"
+    },
+    "CapturePolicySigningKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alg", "kty", "crv", "x", "kid", "d"],
+      "properties": {
+        "alg": {
+          "const": "Ed25519"
+        },
+        "kty": {
+          "const": "OKP"
+        },
+        "crv": {
+          "const": "Ed25519"
+        },
+        "x": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "kid": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{3,128}$"
+        },
+        "d": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$",
+          "description": "呼出元がメモリで供給する署名用秘密値。保存・表示しない。"
+        }
+      },
+      "description": "policy専用の署名鍵。実環境の取得・供給方式は別途確定する。"
+    },
+    "FetchCapturePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recordingId", "proof"],
+      "properties": {
+        "recordingId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        },
+        "proof": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8192
+        }
+      },
+      "description": "対象録画と現在のCredential IDへ端末証明を拘束する。任意URLや任意操作を含めない。"
+    },
+    "CapturePolicyResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "policy"],
+      "properties": {
+        "schemaVersion": {
+          "const": 2
+        },
+        "policy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8192
+        }
+      },
+      "description": "署名済みpolicyをメモリで渡す。受信側の署名・主体・期限検証を省略しない。"
     }
   }
 }

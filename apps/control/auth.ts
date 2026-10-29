@@ -23,6 +23,8 @@ export interface Env {
   TELESTRA_CONTROL_ISSUER: string;
   TELESTRA_CONTROL_PUBLIC_JWKS: string;
   TELESTRA_CONTROL_PRIVATE_JWK: string;
+  TELESTRA_CAPTURE_POLICY_PRIVATE_JWK?: string;
+  TELESTRA_CAPTURE_POLICY_MAX_LIFETIME_SECONDS?: string;
 }
 export interface NodeRow {
   node_id: string;
@@ -172,7 +174,7 @@ export async function proof(
   env: Env,
   row: NodeRow,
   token: string,
-  purpose: "join" | "rotate" | "connect",
+  purpose: "join" | "rotate" | "connect" | "capture-policy",
   challenge: string,
 ): Promise<ControlMap["DeviceProof"]> {
   // 登録済みの端末鍵で参加・更新の目的とchallengeを拘束し、別操作への転用を防ぐ。

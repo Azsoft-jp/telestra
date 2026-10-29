@@ -32,3 +32,8 @@ export declare function CapturePermitV2(value: unknown): boolean;
 export declare function CapturePermitV2Header(value: unknown): boolean;
 export declare function CapturePermitV2Key(value: unknown): boolean;
 export declare function CapturePermitV2Context(value: unknown): boolean;
+export declare function CapturePolicyV2(value: unknown): boolean;
+export declare function CapturePolicyV2Header(value: unknown): boolean;
+export declare function CapturePolicySigningKey(value: unknown): boolean;
+export declare function FetchCapturePolicy(value: unknown): boolean;
+export declare function CapturePolicyResponse(value: unknown): boolean;

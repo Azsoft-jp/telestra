@@ -69,4 +69,8 @@ Nodeの`/agent`はBearer資格と端末鍵の一回限りの接続証明で認�
 
 ## 認可世代とDB移行
 
-ローカルfixtureは固定順で0001・0002を適用する。移行専用試験だけが0001で開始し、既存データを保持した0002移行と未移行時の拒否を確認する。再起動では移行を繰り返さない。本番へ適用するコマンドは用意していない。上限・失敗・復旧の検証範囲は[Node認可世代](node-authorization-epoch.md)と[ADR-027](architecture/decisions/ADR-027-node-authorization-epoch.md)を参照する。
+ローカルfixtureは固定順で0001・0002・0003を適用する。移行専用試験だけが0001で開始し、既存データを保持した0002移行と未移行時の拒否を確認する。再起動では移行を繰り返さない。本番へ適用するコマンドは用意していない。上限・失敗・復旧の検証範囲は[Node認可世代](node-authorization-epoch.md)と[ADR-027](architecture/decisions/ADR-027-node-authorization-epoch.md)を参照する。
+
+## 署名付きpolicyの試験
+
+[policyの発行・取得](signed-capture-policy.md)はcontrol:checkへ含める。専用fixtureだけが合成署名鍵と最大有効期間をメモリへ構成し、確定予約・録画台帳・割当を用意する。通常のauth:demoではこの署名構成を有効にしない。実SchedulerやNodeの確定保存が完成したものではなく、取得APIをインターネットへ公開する手順も提供しない。

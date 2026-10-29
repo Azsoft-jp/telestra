@@ -2,6 +2,8 @@
 
 ユーザーはCompact JWS v2と、認可世代・Credential世代の分離を選択した。決定は[ADR-026](architecture/decisions/ADR-026-capture-permit-v2-proposal.md)へ反映した。v1のcapture.start、Node Credential、制御JWSは維持し、v2検証失敗から旧形式へ戻す処理は設けない。
 
+
+後続変更で[署名付きpolicyの発行・取得](signed-capture-policy.md)を追加した。以下の未実装記述は当該差分の範囲を示す。Nodeの確定保存・実録画は引き続き未実装である。
 ## 実装範囲
 
 [claims Schema](../contracts/capture-permit-v2.schema.json)からTypeScriptの型、Worker用の事前生成検証器、Goへ埋め込む契約を生成する。[TypeScript](../packages/capture-permit/index.ts)と[Go](../nodes/tuner/wire/permit_v2.go)は専用の固定公開鍵集合、Ed25519、typ、audience、issuer、家庭・環境・Node・予約・割当・保存先の論理権限を照合する。公開鍵は1〜8本、JWSは8KiB、headerは1KiB、JSONの深さは32までとする。識別子と固定用途名はASCIIに限定し、制御文字を拒否する。
