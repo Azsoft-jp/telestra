@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.example.invalid/telestra/proposals/capture-storage-scope.schema.json",
+  "title": "未採用の録画用Storage Scope候補",
+  "description": "署名済みUpload Grantそのものではない。提案の対応関係を検査するための論理権限。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scopeId",
+    "adapterId",
+    "tenantId",
+    "environment",
+    "nodeId",
+    "recordingId",
+    "attemptId",
+    "prefix",
+    "method",
+    "purpose",
+    "maxChunkBytes",
+    "namespaceId"
+  ],
+  "properties": {
+    "scopeId": {
+      "$ref": "#/$defs/id",
+      "description": "Permitが参照する論理権限。"
+    },
+    "adapterId": {
+      "$ref": "#/$defs/id",
+      "description": "Nodeに事前登録するStorageAdapterの識別子。"
+    },
+    "tenantId": {
+      "$ref": "#/$defs/id",
+      "description": "対象家庭。"
+    },
+    "environment": {
+      "enum": ["development", "staging", "production"],
+      "description": "対象環境。"
+    },
+    "nodeId": {
+      "$ref": "#/$defs/id",
+      "description": "書込を許可するNode。"
+    },
+    "recordingId": {
+      "$ref": "#/$defs/id",
+      "description": "対象の論理録画。"
+    },
+    "attemptId": {
+      "$ref": "#/$defs/id",
+      "description": "対象の不変attempt。"
+    },
+    "prefix": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "現行の論理prefix recordings/録画/attempts/attempt/を維持する。家庭の物理分離はnamespaceへ拘束する。"
+    },
+    "method": {
+      "const": "PUT",
+      "description": "原本の限定書込。読取・削除・canonical更新には使わない。"
+    },
+    "purpose": {
+      "const": "original-write",
+      "description": "原本書込専用。canonical公開の権利を与えない。"
+    },
+    "maxChunkBytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "チャンク単位の上限。Node構成の上限以下とする。"
+    },
+    "namespaceId": {
+      "$ref": "#/$defs/id",
+      "description": "家庭へ固定した論理namespace。実Bucket名や個人構成ではない。"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    }
+  }
+}
