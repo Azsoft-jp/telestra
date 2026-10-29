@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.example.test/tv/v1/node-envelope.schema.json",
+  "title": "TV Node Control Envelope v1",
+  "description": "WebSocket control envelope only. Each type payload MUST also be validated by a type-specific schema in implementation. Credential/signature is verified at transport/identity layer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocolVersion",
+    "messageId",
+    "kind",
+    "type",
+    "nodeId",
+    "sessionEpoch",
+    "issuedAt",
+    "expiresAt",
+    "payload"
+  ],
+  "properties": {
+    "protocolVersion": { "const": 1 },
+    "messageId": { "type": "string", "minLength": 8, "maxLength": 128 },
+    "correlationId": { "type": "string", "minLength": 8, "maxLength": 128 },
+    "kind": { "enum": ["command", "event", "ack"] },
+    "type": {
+      "enum": [
+        "node.hello",
+        "node.heartbeat",
+        "node.status",
+        "reservation.snapshot",
+        "capture.start",
+        "capture.cancel",
+        "capture.status",
+        "encode.start",
+        "encode.cancel",
+        "encode.status",
+        "epg.delta",
+        "command.ack"
+      ]
+    },
+    "nodeId": { "type": "string", "minLength": 4, "maxLength": 128 },
+    "sessionEpoch": { "type": "integer", "minimum": 0 },
+    "issuedAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "payload": { "type": "object", "maxProperties": 64 },
+    "traceId": { "type": "string", "maxLength": 128 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "command.ack" } } },
+      "then": { "required": ["correlationId"], "properties": { "kind": { "const": "ack" } } }
+    },
+    {
+      "if": { "properties": { "type": { "enum": ["capture.start", "capture.cancel", "encode.start", "encode.cancel", "reservation.snapshot"] } } },
+      "then": { "properties": { "kind": { "const": "command" } } }
+    },
+    {
+      "if": { "properties": { "type": { "enum": ["node.hello", "node.heartbeat", "node.status", "capture.status", "encode.status", "epg.delta"] } } },
+      "then": { "properties": { "kind": { "const": "event" } } }
+    }
+  ]
+}

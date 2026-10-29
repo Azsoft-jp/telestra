@@ -1,0 +1,79 @@
+# Phase 01のローカル実装・検証状況
+
+## 目的と範囲
+
+2026年10月29日の継続作業を記録する。Phase 00のMockを維持し、Phase 01のローカルHTTP認証、D1永続化、DOのWebSocket接続制御、Goの再接続Runner・署名検証・永続履歴・WSS接続を追加した。Phase 01全体は未完了である。本番権限と実サービスへの接続は使っていない。公開WSSライブラリは、ユーザーの承認後に公式資料を参照し、固定版を取得した。
+
+## 日本語コメントの是正
+
+[AGENTS.md](../AGENTS.md)に、新規・変更する手書きコードの日本語コメントを必須とする規則を追加した。各ファイルの責務、公開関数、信頼境界、認証・認可、永続化、再試行、障害時の制約を説明する。処理を読み上げるだけのコメントは増やさない。
+
+既存の英語説明を日本語へ直し、認可、原本の上書き防止、容量制限、公開前の検証にもコメントを補った。生成型と制御契約の検証器は、生成元から日本語コメントを出力する。外部ライブラリのコードは変更していない。
+
+[コメント検査器](../scripts/check-japanese-comments.ts)をlintへ組み込んだ。管理対象の手書きファイルで日本語コメントがない場合や、英語だけの説明コメントがある場合に失敗する。TypeScript系は構文木からコメントを抽出し、文字列、URL、正規表現との誤認を避ける。生成物、ライセンス、機械向け指示は除外する。コメントの正確さや説明の十分さは、人による内容確認も必要である。
+
+yomiyasuの指示に従い、静的検査と修正前後の差分確認を行った。数値、責務、未検証の条件を維持し、監査コメントを実際の保存項目へ合わせた。確認用のテキストは`artifacts/comment-review/`に保存する。WSS追加分の文書とコメントも静的検査と差分確認を行い、`artifacts/phase01-wss-review/`へ記録した。fixtureが本番用の起動コマンドではないことを示す否定は、適用範囲を区別するために維持した。
+
+## 追加した実装
+
+WorkersとD1を第一実装とし、Miniflare/workerdで試験する。[ADR-013](architecture/decisions/ADR-013-phase01-local-auth.md)はローカルの認証方式を定め、本番の鍵運用は未決定のまま残す。
+
+BrowserのBearer TokenとNodeの短命Credentialを、issuer、audience、用途、公開鍵で区別する。利用者の所属とRoleはD1から取得する。Nodeは登録した端末鍵による参加・接続証明を必要とし、参加コードは一度だけ使える。参加コードはhashだけをD1へ保存する。資格の更新・失効では世代を照合し、古い資格を拒否する。署名鍵は試験中にメモリ内で生成し、ログや証跡へ値を出さない。
+
+入力は厳格なSchemaと実読取バイト数で検査する。Browserには許可Originと認証情報を要求し、Cookieだけでは認証しない。Node専用HTTP操作ではOrigin付きの要求を拒否する。Token内のURLから鍵を取得しない。
+
+D1には予約intentと合成した録画試行情報を保存する。予約APIは保存の試験用で、実行Nodeへの割り当ては未実装と応答する。開始日時は将来、終了日時は開始後24時間以内に限るローカル試験用の制約がある。Phase 03の予約・延長仕様を確定したものではない。
+
+接続制御は[ADR-014](architecture/decisions/ADR-014-local-control-channel.md)で具体化した。DOは接続と有限の待ち行列を担当し、再接続時にD1の接続世代を進める。旧接続、偽造、Replay、異なる家庭・環境・資格世代を拒否する。能力登録とHeartbeatを検証し、未ACK命令は保存後に送信する。同じ資格世代の再接続では、hello後に同じ命令IDで再送する。未ACK8件、履歴32件・64KiBを上限とし、滞留を無制限に増やさない。
+
+制御はEd25519のJWSを使用し、型別payloadと外側の署名を検証する。capture.start/cancelの配送を扱うが、Capture Permit内部の暗号検証・媒体処理は未実装である。試験Nodeはnot implementedを返し、録画完了を装わない。
+
+GoのRunnerは総試行数を既定8回、待機を最大30秒に制限する。指数backoffとjitterを使い、資格・プロトコルの失敗では再試行しない。中断と接続解放の失敗も処理する。[ADR-016](architecture/decisions/ADR-016-go-wss-transport.md)に従い、WSS Transportと受信ループへ接続した。TLS検証、リダイレクト拒否、16KiB上限、受領待ちの上限と期限、中断を扱う。helloの受領通知を確認してから接続成功とし、命令は署名検証と履歴を通す。
+
+[ADR-015](architecture/decisions/ADR-015-go-wire-and-command-journal.md)に従い、Goでも生成した契約とEd25519署名を検証する。Goが作る接続証明、hello、Heartbeat、未実装ACKをWorkerで照合し、Go側でもWorkerの署名を確認した。専用ファイルへ接続世代と命令履歴を保存し、再送時は保存済み応答を返す。結果不明、保存失敗、破損、上限超過では処理を停止する。
+
+制御契約の検証器はAjvから事前生成し、補助関数をES Moduleへまとめる。実行時の動的コード生成を避け、NodeとWorkerから同じ検証器を読み込む。Miniflareの配布型定義には未解決の参照があるため、WorkerとPhase 01の試験は別のtsconfigで宣言ファイルの内部検査を省略する。手書きコードのstrict検査は維持する。
+
+## 実行した検査
+
+`npm run check`はローカルで終了コード0だった。修正途中では、生成検証器のES Module内に残ったrequireとMiniflareの型定義参照で失敗した。検証器の事前バンドルと型検査設定の分離後に再実行し、成功した。WebSocketの最初の試験は未実装の/agentが403を返して失敗し、DOの接続実装後に成功した。WSS追加時には、サイズ超過や中断で既に閉じたTLS接続の解放を成功だけと期待した試験が失敗した。閉鎖済みの条件と検出した解放エラーを区別する試験へ直した。資格期限への拘束を追加した際には、試験Nodeの固定30秒の送信が拒否されて1試験が失敗した。送信期限を残りの資格期限へ合わせて修正し、再検査した。
+
+| コマンド・試験 | 実行結果と範囲 |
+| --- | --- |
+| `npm run contract:check` | 全Schema、例示JSON、型・検証器の生成差分を確認 |
+| `npm run lint` | strict、書式、日本語コメント、Go vet、error戻り値検査に成功 |
+| `npm test` | Phase 00の14試験に成功。`PH00-02`でコメント検査器も確認 |
+| `npm run test:go` | Mock、WSS、再接続Runner、署名、履歴、静的検査器のrace付き試験に成功 |
+| `npm run control:check` | Worker・試験の型検査、ローカルビルド、22試験に成功 |
+| GoのWSS | ローカルWorkerへ直接接続。能力登録、15秒周期のHeartbeat、未実装ACK、失効後の停止を確認 |
+| Goの契約・署名 | Workerとの相互署名検証、型別payloadの共通ケース、未知Schema制約の生成拒否を確認 |
+| Linux向けコンパイル | amd64/arm64でcontrol試験バイナリを生成。Linux上での実行は未実施 |
+| Goの永続履歴 | 16並列再送でも処理1回。再読込、別家庭、破損、symlink、書込失敗、子プロセスの異常終了をrace付きで確認 |
+| `NODE-01` / `SEC-02` | HTTPとWSで参加、端末の接続証明、再利用拒否、署名偽装、用途、家庭・環境、期限、更新・失効を確認 |
+| `SEC-01` | 合成録画台帳の別所有者・別家庭からの読取を拒否 |
+| `SEC-04`のHTTP・WS部分 | 悪性Origin、Cookieだけの要求、Browser資格の転用、平文・クエリ付きの接続、期限切れ、audience違い、失効を拒否。実IdPは対象外 |
+| `CORE-02`の認証・制御入力 | 未知項目、過大入力、秘密鍵の混入、不正な機能種別、kind・期限・ACKの矛盾、PermitのNode・scope不整合を拒否 |
+| `NODE-02`のローカル接続部分 | 世代更新、Heartbeat、DO再起動後の未ACK再送、D1台帳の維持、45秒の無通信後のalarm切断を確認。Goも同じTLS接続先へjitter付きで再接続し、世代更新と台帳の保持を確認 |
+| `SEC-03` | 署名・用途・方向・世代・家庭・環境、Replay、未知操作、Binary、16KiB超過、hello前の操作を拒否 |
+| `SEC-10`の有限窓部分 | 同時送信でも未ACK8件で429を返し、ACK後に枠を戻す。全体負荷・DoS耐性は未検証 |
+| `PH01-01` | workerd再起動後に予約intent、合成録画のattempt ID、Nodeの失効状態を保持。外向きfetchは0回 |
+
+証跡は`artifacts/phase00-results.json`、`artifacts/go-results.json`、`artifacts/phase01-results.json`へ分ける。Phase 01のレポートは`phaseCompletion:"incomplete"`とし、部分試験の成功をPhase全体の合格にしない。Git未初期化のためcommitはnull、ソースのSHA-256を別に記録する。CI設定は更新したが、GitHub Actions上では未実行である。
+
+## 未確認とリスク
+
+GoのWSS接続、受信ループ、署名検証、永続履歴を統合し、ローカルWorkerとの直接接続と再接続を確認した。確定予約キャッシュと実行処理、Goからのjoin/rotate、鍵の保管、資格更新時の回復は残っている。EncodeNodeの実Agent接続も未検証である。ローカルTLSの成功を、実環境の経路・証明書・プロキシの確認へ読み替えない。`NODE-02`全体とPhase 01全体は未完了である。PKCEを含むログイン画面・実IdPとの認可フローも未実装である。
+
+D1のローカル再起動試験は、実クラウドの障害、バックアップ、地理的な分断、RPO/RTOを証明しない。DOのhibernation単体、長時間負荷、資格更新と応答の間に失敗した場合の回復手順、鍵の保管・失効運用、監査の保持期間、認証前のDoS対策は引き続き検討が必要である。履歴の上限128件・64KiBで新規命令を拒否し、自動圧縮や結果不明からの復旧は未実装である。試験用Workerはdevelopment以外を拒否し、デプロイ設定は提供していない。
+
+実チューナー、実録画、実Codec、ARIB、GPU、PWA、フロント二重化、本番Cloudflareは未検証である。Phase 00のMock主体とメモリ内Storageを、本番の認証や永続保存として使用しない。
+
+## 変更ファイルと次の作業
+
+添付ZIPとの差分は[現在の変更一覧](implementation-files.md)に記録する。日本語コメントの是正はルートのルール、アプリ、共通パッケージ、GoのMock、検査スクリプト、試験を対象とした。
+
+ローカルの再現手順は[Phase 01実行手順](phase-01-runbook.md)にある。次はGo側の参加・資格更新を、Workerのjoin/rotate契約と結ぶ。公開WSSライブラリの参照・取得は承認済みで、go.modとgo.sumに固定した。実IdP・実環境へ進む際には、issuer、audience、許可Origin、主体とRoleの対応、端末鍵の保管先、時刻ずれ、失効後の既発行Permitの扱いが必要になる。本番の鍵取得・配布やデプロイは別の手順と明示的な承認を要する。
+
+## Telestraの公開整備との接続
+
+PROJECT-01では本体を保持し、名称、TELESTRA_構成、MIT、導入文書、公開前検査を追加している。Worker BindingとGo importを更新したが、JWT用途・Schema ID・v1 wire形式・履歴形式を維持した。現在の検証基準はGo 1.26.10で、上記の古い検証記録と区別する。[公開整備レポート](public-readiness-report.md)で名称変更後の結果を追跡する。

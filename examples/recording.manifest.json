@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "tenantId": "demo-household",
+  "recordingId": "rec-demo-01",
+  "attemptId": "attempt-demo-01",
+  "captureGeneration": 1,
+  "source": {
+    "nodeId": "tuner-demo-01",
+    "backendId": "mirakurun-demo-01",
+    "captureScope": "service-filtered",
+    "serviceKey": "service-demo-01",
+    "packetSize": 188,
+    "filterDescription": "Mock filtered TS; no real broadcast content"
+  },
+  "status": "partial",
+  "createdAt": "2026-10-29T00:00:00Z",
+  "chunks": [
+    {
+      "sequence": 0,
+      "objectKey": "recordings/rec-demo-01/attempts/attempt-demo-01/raw/000000.ts",
+      "sizeBytes": 188000,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "timelineEpoch": 0,
+      "lossPackets": 0
+    }
+  ],
+  "warnings": ["Demonstration only; hash and object are not real"]
+}

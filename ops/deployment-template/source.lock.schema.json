@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "非公開環境から参照する公開ソース。ブランチや可変タグを使用しない。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["repository", "commit"],
+  "properties": {
+    "repository": { "const": "Azsoft-jp/telestra" },
+    "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+  }
+}

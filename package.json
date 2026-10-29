@@ -1,0 +1,55 @@
+{
+  "name": "telestra",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "nodes/encoder"
+  ],
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "generate": "node scripts/generate-types.mjs && node scripts/generate-control-validators.mjs && node scripts/generate-go-control.mjs",
+    "contract:check": "node scripts/generate-types.mjs --check && node scripts/generate-control-validators.mjs --check && node scripts/generate-go-control.mjs --check && node --experimental-strip-types scripts/check-contracts.ts",
+    "lint": "tsc --noEmit && node scripts/check-format.mjs && node --experimental-strip-types scripts/check-japanese-comments.ts && go vet ./... && go run ./scripts/checkerrors",
+    "format": "prettier --write '**/*.{ts,mjs,json,yml,html,css}' && gofmt -w nodes/tuner scripts/checkerrors",
+    "test": "node scripts/test.mjs",
+    "test:go": "node scripts/go-test.mjs",
+    "control:build": "node scripts/build-control.mjs",
+    "control:test": "npm run control:build && node scripts/test.mjs --phase01",
+    "control:check": "tsc -p apps/control/tsconfig.json && tsc -p tests/phase01/tsconfig.json && npm run control:test",
+    "mock": "node --experimental-strip-types scripts/mock.ts",
+    "check": "python3 scripts/validate_package.py && npm run contract:check && npm run lint && npm run public:check && npm test && npm run test:go && npm run control:check",
+    "telestra": "node scripts/telestra.mjs",
+    "demo": "node scripts/telestra.mjs demo",
+    "public:check": "node --experimental-strip-types scripts/check-docs.ts && node --experimental-strip-types scripts/audit-licenses.ts && node --experimental-strip-types scripts/publication-scan.ts"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "fundamental-styles": "0.42.0",
+    "jose": "6.2.12"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261019.1",
+    "@types/node": "24.19.1",
+    "esbuild": "0.28.2",
+    "miniflare": "4.20260730.0",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3"
+  },
+  "license": "MIT",
+  "description": "Cloudflare-firstの分散テレビ視聴・録画基盤。現在はローカルMockと制御契約を開発中。",
+  "bin": {
+    "telestra": "scripts/telestra.mjs"
+  },
+  "overrides": {
+    "miniflare": {
+      "undici": "7.30.1",
+      "sharp": "0.35.5"
+    }
+  }
+}

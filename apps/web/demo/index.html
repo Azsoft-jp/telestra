@@ -1,0 +1,102 @@
+<!doctype html>
+<!-- 合成fixtureの確認専用画面。実録画や本番の管理操作を提供しない。 -->
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Telestra | チューナー不要のDemo</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/fundamental-button.css" />
+    <link rel="stylesheet" href="/fundamental-table.css" />
+    <link rel="stylesheet" href="/demo.css" />
+    <script type="module" src="/demo.mjs"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">本文へ移動</a>
+    <header>
+      <img src="/logo.svg" alt="Telestra" width="225" height="64" /><span
+        class="mode"
+        >LOCAL DEMO</span
+      >
+    </header>
+    <main id="main">
+      <p class="eyebrow">Broadcast, unbound.</p>
+      <h1>録画を、ひとつの機器に閉じ込めない。</h1>
+      <p class="lead">
+        原本の保存と、視聴のための変換を分けるテレビ基盤。ここでは合成fixtureで保存と状態遷移を確認できます。
+      </p>
+      <aside class="notice">
+        <strong>合成データを表示するMock UIです。</strong>
+        実放送・実録画はありません。映像再生、EPG、PWA、端末保存は未実装です。
+      </aside>
+      <section class="metrics" aria-label="Mockの検証結果">
+        <div><span>原本バイト</span><strong id="bytes">待機中</strong></div>
+        <div><span>原本チャンク</span><strong id="chunks">待機中</strong></div>
+        <div><span>映像再生</span><strong>未実装</strong></div>
+      </section>
+      <section class="panel">
+        <div class="section-heading">
+          <h2>録画の状態を確認する</h2>
+          <button class="fd-button" id="reload" type="button">
+            結果を再読込
+          </button>
+        </div>
+        <p id="status" role="status" aria-live="polite">
+          合成fixtureの結果を取得しています。
+        </p>
+        <pre id="hash" aria-label="再構築した原本のSHA-256"></pre>
+      </section>
+      <section class="panel">
+        <h2>状態表示の見本</h2>
+        <label for="state">表示する状態</label
+        ><select id="state">
+          <option value="mock-ready">模擬変換後</option>
+          <option value="empty">空</option>
+          <option value="waiting">待機</option>
+          <option value="failed">失敗</option>
+          <option value="disconnected">切断</option>
+          <option value="reconnecting">復帰中</option>
+          <option value="forbidden">権限なし</option>
+        </select>
+        <p id="example" role="status" aria-live="polite"></p>
+        <p class="muted">
+          状態の見本です。この選択で録画や権限は変更されません。
+        </p>
+      </section>
+      <section class="panel">
+        <h2>機能の実装状況</h2>
+        <div class="table-wrap">
+          <table class="fd-table">
+            <thead>
+              <tr>
+                <th scope="col">機能</th>
+                <th scope="col">現在の範囲</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">原本の保存と再構築</th>
+                <td>合成バイトによるMock</td>
+              </tr>
+              <tr>
+                <th scope="row">Node認証・WSS</th>
+                <td>ローカルの契約試験あり</td>
+              </tr>
+              <tr>
+                <th scope="row">EPG・予約録画・視聴</th>
+                <td>計画中。予約intentの保存試験のみ</td>
+              </tr>
+              <tr>
+                <th scope="row">ARIB字幕・PWA・端末保存</th>
+                <td>設計・契約のみ</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <footer>
+      ローカル専用。外部へ公開しないでください。別originではログインやPWAの保存領域を共有しません。
+    </footer>
+  </body>
+</html>

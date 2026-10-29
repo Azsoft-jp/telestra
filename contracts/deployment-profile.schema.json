@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.example.test/tv/v1/deployment-profile.schema.json",
+  "title": "TV Deployment Profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "environment", "controlPlane", "frontend", "recording", "features"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "environment": { "enum": ["development", "staging", "production"] },
+    "controlPlane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "apiOrigin"],
+      "properties": {
+        "provider": { "enum": ["local", "cloudflare"] },
+        "apiOrigin": { "type": "string", "format": "uri", "pattern": "^https?://" }
+      }
+    },
+    "frontend": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["redundancy", "primaryOrigin"],
+      "properties": {
+        "redundancy": { "enum": ["none", "dual-static"] },
+        "primaryOrigin": { "type": "string", "format": "uri", "pattern": "^https?://" },
+        "secondaryOrigin": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "secondaryProvider": { "const": "aws-s3-cloudfront" }
+      }
+    },
+    "recording": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primaryStorage", "spoolMaxBytes", "spoolOverflowPolicy"],
+      "properties": {
+        "primaryStorage": { "enum": ["local", "r2", "s3"] },
+        "secondaryStorage": { "enum": ["r2", "s3"] },
+        "spoolMaxBytes": { "type": "integer", "minimum": 0 },
+        "spoolOverflowPolicy": { "const": "stop-capture-and-alert" }
+      }
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["liveStreaming", "postEncode", "offlineLibrary"],
+      "properties": {
+        "liveStreaming": { "type": "boolean" },
+        "postEncode": { "type": "boolean" },
+        "offlineLibrary": { "type": "boolean" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "frontend": { "properties": { "redundancy": { "const": "dual-static" } }, "required": ["redundancy"] } } },
+      "then": { "properties": { "frontend": { "required": ["secondaryOrigin", "secondaryProvider"] } } }
+    },
+    {
+      "if": { "properties": { "environment": { "const": "production" } }, "required": ["environment"] },
+      "then": {
+        "properties": {
+          "controlPlane": { "properties": { "apiOrigin": { "pattern": "^https://" } } },
+          "frontend": { "properties": { "primaryOrigin": { "pattern": "^https://" } } }
+        }
+      }
+    }
+  ]
+}

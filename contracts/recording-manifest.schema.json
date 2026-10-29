@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.example.test/tv/v1/recording-manifest.schema.json",
+  "title": "Immutable raw capture attempt manifest v1",
+  "description": "An attempt manifest is not an HLS manifest and not the canonical recording pointer. Hashes in examples are placeholders.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "tenantId", "recordingId", "attemptId", "source", "status", "createdAt", "chunks"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "tenantId": { "$ref": "#/$defs/id" },
+    "recordingId": { "$ref": "#/$defs/id" },
+    "attemptId": { "$ref": "#/$defs/id" },
+    "captureGeneration": { "type": "integer", "minimum": 0 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodeId", "backendId", "captureScope", "serviceKey", "packetSize"],
+      "properties": {
+        "nodeId": { "$ref": "#/$defs/id" },
+        "backendId": { "$ref": "#/$defs/id" },
+        "captureScope": { "enum": ["service-filtered", "multiplex"] },
+        "serviceKey": { "$ref": "#/$defs/id" },
+        "packetSize": { "enum": [188, 204] },
+        "filterDescription": { "type": "string", "maxLength": 512 }
+      }
+    },
+    "status": { "enum": ["recording", "finalizing", "completed", "partial", "failed"] },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "endedAt": { "type": "string", "format": "date-time" },
+    "sourceStreamSha256": { "$ref": "#/$defs/hash" },
+    "chunks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sequence", "objectKey", "sizeBytes", "sha256"],
+        "properties": {
+          "sequence": { "type": "integer", "minimum": 0 },
+          "objectKey": { "type": "string", "minLength": 1, "maxLength": 1024, "pattern": "^recordings/" },
+          "sizeBytes": { "type": "integer", "minimum": 1 },
+          "sha256": { "$ref": "#/$defs/hash" },
+          "firstPts90k": { "type": "integer", "minimum": 0 },
+          "lastPts90k": { "type": "integer", "minimum": 0 },
+          "timelineEpoch": { "type": "integer", "minimum": 0 },
+          "lossPackets": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "warnings": { "type": "array", "items": { "type": "string", "maxLength": 256 }, "maxItems": 1000 }
+  },
+  "if": { "properties": { "status": { "const": "completed" } }, "required": ["status"] },
+  "then": { "required": ["endedAt", "sourceStreamSha256"] },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{3,128}$" },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

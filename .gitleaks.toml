@@ -1,0 +1,7 @@
+# 既定の秘密検出規則を使い、依存物とローカル証跡だけを対象外にする。
+[extend]
+useDefault = true
+
+[allowlist]
+description = "依存物・ローカル証跡・Git内部を除く"
+paths = ['''(^|/)(node_modules|artifacts|\.git|\.terraform)(/|$)''']

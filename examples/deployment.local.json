@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "environment": "development",
+  "controlPlane": {
+    "provider": "local",
+    "apiOrigin": "http://localhost:8787"
+  },
+  "frontend": {
+    "redundancy": "none",
+    "primaryOrigin": "http://localhost:5173"
+  },
+  "recording": {
+    "primaryStorage": "local",
+    "spoolMaxBytes": 2147483648,
+    "spoolOverflowPolicy": "stop-capture-and-alert"
+  },
+  "features": {
+    "liveStreaming": false,
+    "postEncode": true,
+    "offlineLibrary": false
+  }
+}

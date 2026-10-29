@@ -1,0 +1,11 @@
+package-lock.json
+packages/contracts/generated.ts
+packages/control-contracts/runtime.mjs
+packages/control-contracts/runtime.d.mts
+artifacts/
+node_modules/
+contracts/capture-permit.schema.json
+contracts/deployment-profile.schema.json
+contracts/node-envelope.schema.json
+contracts/recording-manifest.schema.json
+examples/

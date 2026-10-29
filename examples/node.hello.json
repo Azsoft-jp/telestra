@@ -1,0 +1,16 @@
+{
+  "protocolVersion": 1,
+  "messageId": "hello-demo-0001",
+  "kind": "event",
+  "type": "node.hello",
+  "nodeId": "tuner-demo-01",
+  "sessionEpoch": 1,
+  "issuedAt": "2026-10-29T00:00:00Z",
+  "expiresAt": "2026-10-29T00:01:00Z",
+  "payload": {
+    "agentVersion": "0.0.0-mock",
+    "backend": "mirakurun-mock",
+    "capabilities": ["capture", "epg-read"],
+    "maxConcurrentCaptures": 2
+  }
+}

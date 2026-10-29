@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.example.test/tv/v1/node-payloads.schema.json",
+  "title": "Phase 00 type-specific mock payloads (not a real backend API)",
+  "$defs": {
+    "node.hello": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "agentVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "backend": {
+          "enum": ["mirakurun-mock", "mirakc-mock", "encoder-mock"]
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "enum": ["capture", "epg-read", "mock-encode"]
+          },
+          "maxItems": 8
+        },
+        "maxConcurrentCaptures": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16
+        }
+      },
+      "required": [
+        "agentVersion",
+        "backend",
+        "capabilities",
+        "maxConcurrentCaptures"
+      ]
+    },
+    "node.heartbeat": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "uptimeSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "spoolBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": ["uptimeSeconds", "spoolBytes"]
+    },
+    "node.status": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "enum": ["waiting", "running", "completed", "failed", "disconnected"]
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 256
+        }
+      },
+      "required": ["state", "detail"]
+    },
+    "reservation.snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "permits": {
+          "type": "array",
+          "items": {
+            "$ref": "https://schema.example.test/tv/v1/capture-permit.schema.json"
+          },
+          "maxItems": 32
+        }
+      },
+      "required": ["revision", "permits"]
+    },
+    "capture.start": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "permit": {
+          "$ref": "https://schema.example.test/tv/v1/capture-permit.schema.json"
+        }
+      },
+      "required": ["permit"]
+    },
+    "capture.cancel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "recordingId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        },
+        "attemptId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        }
+      },
+      "required": ["recordingId", "attemptId"]
+    },
+    "capture.status": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "recordingId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        },
+        "attemptId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        },
+        "state": {
+          "enum": [
+            "recording",
+            "transfer-pending",
+            "completed",
+            "partial",
+            "failed"
+          ]
+        }
+      },
+      "required": ["recordingId", "attemptId", "state"]
+    },
+    "encode.start": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        },
+        "recordingId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        },
+        "attemptId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        },
+        "profile": {
+          "const": "mock-only"
+        },
+        "sourceManifestSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "jobId",
+        "recordingId",
+        "attemptId",
+        "profile",
+        "sourceManifestSha256"
+      ]
+    },
+    "encode.cancel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        }
+      },
+      "required": ["jobId"]
+    },
+    "encode.status": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        },
+        "state": {
+          "enum": ["waiting", "running", "completed", "failed"]
+        }
+      },
+      "required": ["jobId", "state"]
+    },
+    "epg.delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backend": {
+          "enum": ["mirakurun-mock", "mirakc-mock"]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "programIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9_.:-]+$"
+          },
+          "maxItems": 256
+        }
+      },
+      "required": ["backend", "revision", "programIds"]
+    },
+    "command.ack": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "code": {
+          "enum": ["accepted", "not implemented", "denied", "expired"]
+        }
+      },
+      "required": ["accepted", "code"]
+    }
+  }
+}

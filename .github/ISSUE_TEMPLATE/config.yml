@@ -1,0 +1,6 @@
+# 秘密を通常Issueへ投稿させず、有効な非公開報告の経路を案内する。
+blank_issues_enabled: false
+contact_links:
+  - name: セキュリティの非公開報告
+    url: https://github.com/Azsoft-jp/telestra/security/advisories/new
+    about: Token、秘密鍵、実IP、実番組履歴を公開Issueへ貼らないでください。

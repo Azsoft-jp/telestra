@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.example.test/tv/v1/mock-playback.schema.json",
+  "title": "Unplayable Phase 00 rendition manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "mock-playback"
+    },
+    "playable": {
+      "const": false
+    },
+    "codecSupport": {
+      "const": "not implemented"
+    },
+    "recordingId": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    },
+    "attemptId": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    },
+    "renditionId": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    },
+    "sourceManifestSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "preservedMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "objectKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(recordings|renditions)/[A-Za-z0-9_./:-]+$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        }
+      },
+      "required": ["objectKey", "sha256", "sizeBytes"]
+    },
+    "segments": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "objectKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "pattern": "^(recordings|renditions)/[A-Za-z0-9_./:-]+$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1048576
+          }
+        },
+        "required": ["objectKey", "sha256", "sizeBytes"]
+      },
+      "maxItems": 64
+    },
+    "captionSidecar": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "objectKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(recordings|renditions)/[A-Za-z0-9_./:-]+$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        }
+      },
+      "required": ["objectKey", "sha256", "sizeBytes"]
+    },
+    "audioMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "objectKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(recordings|renditions)/[A-Za-z0-9_./:-]+$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        }
+      },
+      "required": ["objectKey", "sha256", "sizeBytes"]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "kind",
+    "playable",
+    "codecSupport",
+    "recordingId",
+    "attemptId",
+    "renditionId",
+    "sourceManifestSha256",
+    "preservedMetadata",
+    "segments",
+    "captionSidecar",
+    "audioMetadata"
+  ]
+}

@@ -1,0 +1,22 @@
+// Schema検証器の型を自動生成する。直接編集しない。
+export declare function PublicJwk(value: unknown): boolean;
+export declare function RegisterNode(value: unknown): boolean;
+export declare function JoinChallenge(value: unknown): boolean;
+export declare function JoinNode(value: unknown): boolean;
+export declare function RotateNode(value: unknown): boolean;
+export declare function UserClaims(value: unknown): boolean;
+export declare function NodeClaims(value: unknown): boolean;
+export declare function DeviceProof(value: unknown): boolean;
+export declare function ReservationInput(value: unknown): boolean;
+export declare function RecordingState(value: unknown): boolean;
+export declare function WsResume(value: unknown): boolean;
+export declare function WsHello(value: unknown): boolean;
+export declare function WsHeartbeat(value: unknown): boolean;
+export declare function WsCaptureStart(value: unknown): boolean;
+export declare function WsCaptureCancel(value: unknown): boolean;
+export declare function WsCommandAck(value: unknown): boolean;
+export declare function WsSessionReady(value: unknown): boolean;
+export declare function WsReceipt(value: unknown): boolean;
+export declare function WsEnvelope(value: unknown): boolean;
+export declare function ControlClaims(value: unknown): boolean;
+export declare function DispatchCommand(value: unknown): boolean;

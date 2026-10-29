@@ -1,0 +1,24 @@
+{
+  "fixtureId": "synthetic-tracks-v1",
+  "kind": "mock-track-metadata",
+  "aribPreservation": "not implemented",
+  "captions": [
+    {
+      "language": "ja",
+      "text": "合成字幕の動作確認",
+      "timelineEpoch": 0
+    }
+  ],
+  "audio": [
+    {
+      "language": "ja",
+      "role": "main",
+      "codec": "mock-only"
+    },
+    {
+      "language": "ja",
+      "role": "secondary",
+      "codec": "mock-only"
+    }
+  ]
+}

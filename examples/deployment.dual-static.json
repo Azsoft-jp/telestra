@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "environment": "production",
+  "controlPlane": {
+    "provider": "cloudflare",
+    "apiOrigin": "https://api.example.test"
+  },
+  "frontend": {
+    "redundancy": "dual-static",
+    "primaryOrigin": "https://tv.example.test",
+    "secondaryOrigin": "https://tv-backup.example.net",
+    "secondaryProvider": "aws-s3-cloudfront"
+  },
+  "recording": {
+    "primaryStorage": "r2",
+    "secondaryStorage": "s3",
+    "spoolMaxBytes": 21474836480,
+    "spoolOverflowPolicy": "stop-capture-and-alert"
+  },
+  "features": {
+    "liveStreaming": true,
+    "postEncode": true,
+    "offlineLibrary": true
+  }
+}

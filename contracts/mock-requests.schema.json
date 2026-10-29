@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.example.test/tv/v1/mock-requests.schema.json",
+  "title": "Phase 00 in-process API requests",
+  "$defs": {
+    "playback": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "recordingId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        }
+      },
+      "required": ["recordingId"]
+    },
+    "encode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "recordingId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        },
+        "jobId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        }
+      },
+      "required": ["recordingId", "jobId"]
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.example.test/tv/v1/mock-tracks.schema.json",
+  "title": "Synthetic track metadata only; not ARIB golden fixture",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "fixtureId": {
+      "const": "synthetic-tracks-v1"
+    },
+    "kind": {
+      "const": "mock-track-metadata"
+    },
+    "aribPreservation": {
+      "const": "not implemented"
+    },
+    "captions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "language": {
+            "const": "ja"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "timelineEpoch": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": ["language", "text", "timelineEpoch"]
+      },
+      "maxItems": 16
+    },
+    "audio": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "language": {
+            "const": "ja"
+          },
+          "role": {
+            "enum": ["main", "secondary"]
+          },
+          "codec": {
+            "const": "mock-only"
+          }
+        },
+        "required": ["language", "role", "codec"]
+      },
+      "maxItems": 8
+    }
+  },
+  "required": ["fixtureId", "kind", "aribPreservation", "captions", "audio"]
+}

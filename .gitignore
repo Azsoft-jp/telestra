@@ -1,0 +1,23 @@
+node_modules/
+artifacts/
+*.tsbuildinfo
+__pycache__/
+.env
+.env.*
+!.env.example
+.wrangler/
+.terraform/
+*.tfstate*
+
+# 公開対象に含めないローカル状態と秘密のファイル。
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+.DS_Store

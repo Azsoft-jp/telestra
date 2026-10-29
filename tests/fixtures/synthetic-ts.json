@@ -1,0 +1,9 @@
+{
+  "fixtureId": "synthetic-ts-v1",
+  "packetCount": 13,
+  "packetsPerChunk": 4,
+  "expectedSha256": {
+    "188": "d0d163f0a4c5fb6eae933fbd2951e92f82cb1dcd53f9e6e7d1ad50c941ad9468",
+    "204": "ad869c0863d9ed9585bbef52f8885cdcad78b8b59cdd0646627ab1fbdb7b231f"
+  }
+}
