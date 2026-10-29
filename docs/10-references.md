@@ -57,6 +57,10 @@
 - [COOP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy)。popupとnavigationの扱い。
 - [Playwright Library](https://playwright.dev/docs/library)と[ブラウザ導入](https://playwright.dev/docs/browsers)。既存のNode試験と共通の証跡へ接続する。
 
+## 制御APIの本文制限
+
+2026年10月29日に[Workersの制限](https://developers.cloudflare.com/workers/platform/limits/)、[Request.signal](https://developers.cloudflare.com/changelog/post/2025-05-22-handle-request-cancellation/)、[ReadableStream](https://developers.cloudflare.com/workers/runtime-apis/streams/readablestream/)を参照した。[ADR-025](architecture/decisions/ADR-025-control-body-deadline.md)でアプリの期限と中断の制約を記録する。
+
 ## 追加検証
 
 - KonomiTVや字幕ライブラリのライセンス（バイナリ依存物まで）、配布義務。
