@@ -6,6 +6,7 @@ import (
 	"crypto/ed25519"
 	"encoding/json"
 	"errors"
+	"net/url"
 	"sync"
 	"time"
 
@@ -31,10 +32,12 @@ type Client struct {
 	mu      sync.Mutex
 	active  bool
 	started time.Time
+	binding string
 	now     func() time.Time
 }
 
 // NewClientは初期設定と資格を検証する。鍵はコピーし、資格と秘密鍵をファイルへ保存しない。
+// 束縛と資格hashを確認し、直接設定による初回登録は空の新規履歴だけに許可する。
 func NewClient(config ClientConfig) (*Client, error) {
 	if config.Transport == nil || config.Verifier == nil || config.Journal == nil || len(config.DeviceKey) != ed25519.PrivateKeySize || config.Identity.Environment != "development" {
 		return nil, ErrPolicy
@@ -58,6 +61,18 @@ func NewClient(config ClientConfig) (*Client, error) {
 	if _, err := client.hello(0); err != nil {
 		return nil, ErrPolicy
 	}
+	endpoint, err := url.Parse(config.Transport.endpoint)
+	if err != nil || ValidateEndpoint(config.Transport.endpoint) != nil {
+		return nil, ErrPolicy
+	}
+	binding, err := credentialBinding("https://"+endpoint.Host, config.Verifier, config.Identity, config.DeviceKey, config.DeviceKeyID)
+	if err != nil {
+		return nil, err
+	}
+	if err := config.Journal.checkCredential(binding, config.Credential, credential.Version, true); err != nil {
+		return nil, errors.Join(ErrProtocol, err)
+	}
+	client.binding = binding
 	return client, nil
 }
 
@@ -106,6 +121,10 @@ func (c *Client) Dial(ctx context.Context) (session Session, result error) {
 	credential, err := c.config.Verifier.VerifyCredential(c.config.Credential, c.config.Identity, c.now())
 	if err != nil {
 		return nil, ErrCredentials
+	}
+	// 構築後に更新が始まった場合も、古いClientのコピーから接続させない。
+	if err := c.config.Journal.checkCredential(c.binding, c.config.Credential, credential.Version, false); err != nil {
+		return nil, errors.Join(ErrProtocol, err)
 	}
 	proof, err := wire.SignProof(c.config.DeviceKey, c.config.DeviceKeyID, c.config.Identity, "connect", credential.TokenID, c.now())
 	if err != nil {

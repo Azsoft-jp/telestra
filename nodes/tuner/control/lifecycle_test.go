@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -32,10 +31,13 @@ func lifecycleFixture(t *testing.T, failure bool, variant ...string) (*Lifecycle
 			}
 		}
 		value := provisionResponse(t, f, version)
-		if version > 1 && len(variant) > 0 {
+		if version == 1 || len(variant) > 0 {
 			expiry := initialExpiry
-			if variant[0] == "short" {
+			if version == 1 || variant[0] == "short" {
 				expiry = time.Now().Unix() + 2
+			}
+			if version == 1 {
+				initialExpiry = expiry
 			}
 			value["expiresAt"] = expiry
 			value["accessToken"] = f.sign(t, map[string]any{"iss": "https://control.example.test", "aud": "tv-node-agent", "sub": f.identity.NodeID, "iat": time.Now().Unix(), "exp": expiry, "jti": "credential-refreshed", "tenantId": f.identity.TenantID, "environment": f.identity.Environment, "nodeId": f.identity.NodeID, "nodeRole": f.identity.Role, "credentialVersion": version}, "tv-node+jwt")
@@ -46,18 +48,11 @@ func lifecycleFixture(t *testing.T, failure bool, variant ...string) (*Lifecycle
 	if err := p.Join(context.Background(), strings.Repeat("a", 43)); err != nil {
 		t.Fatal("参加に失敗")
 	}
-	// 最初の資格だけを短くする。署名と外側の期限は常に一致させる。
-	now := time.Now().Unix()
-	expiry := now + 2
-	mu.Lock()
-	initialExpiry = expiry
-	mu.Unlock()
-	p.token = f.sign(t, map[string]any{"iss": "https://control.example.test", "aud": "tv-node-agent", "sub": f.identity.NodeID, "iat": now, "exp": expiry, "jti": "credential-initial", "tenantId": f.identity.TenantID, "environment": f.identity.Environment, "nodeId": f.identity.NodeID, "nodeRole": f.identity.Role, "credentialVersion": 1}, "tv-node+jwt")
 	wss, err := NewWSS("wss://"+strings.TrimPrefix(server.URL, "https://")+"/agent", roots)
 	if err != nil {
 		t.Fatal("接続先の構築に失敗")
 	}
-	journal := openTestJournal(t, filepath.Join(t.TempDir(), "journal"), 16)
+	journal := p.config.Journal
 	l, err := NewLifecycle(LifecycleConfig{Provisioner: p, Transport: wss, Journal: journal, AgentVersion: "test-lifecycle", RenewBefore: time.Second, Policy: DefaultPolicy()})
 	if err != nil {
 		t.Fatal("資格更新Runnerの構築に失敗")

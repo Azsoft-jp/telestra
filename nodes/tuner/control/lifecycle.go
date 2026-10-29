@@ -49,7 +49,7 @@ type Lifecycle struct {
 
 // NewLifecycleはHTTPとWSSのorigin、端末識別、履歴を同じ構成へ拘束し、参加済み資格を検証する。
 func NewLifecycle(config LifecycleConfig) (*Lifecycle, error) {
-	if config.Provisioner == nil || config.Transport == nil || config.Journal == nil {
+	if config.Provisioner == nil || config.Transport == nil || config.Journal == nil || config.Journal != config.Provisioner.config.Journal {
 		return nil, ErrPolicy
 	}
 	if config.RenewBefore == 0 {

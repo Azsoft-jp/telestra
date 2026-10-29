@@ -29,6 +29,9 @@ type Verifier struct {
 	keys   map[string]ed25519.PublicKey
 }
 
+// Issuerは構成済みの発行者を返す。受信Tokenから信頼先を選ぶためには使わない。
+func (v *Verifier) Issuer() string { return v.issuer }
+
 // NewVerifierは未知方式、重複kid、不正な鍵長を拒否する。
 func NewVerifier(issuer string, keys []PublicJWK) (*Verifier, error) {
 	if issuer == "" || len(issuer) > 256 || len(keys) < 1 || len(keys) > 8 {

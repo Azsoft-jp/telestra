@@ -78,6 +78,7 @@ async function agent(
     credential?: Enrolled["credential"];
     joinCode?: string;
     lifecycle?: boolean;
+    checkpoint?: boolean;
   },
   certificate: string,
 ) {
@@ -154,11 +155,13 @@ async function agent(
   });
   child.stdin.end(
     JSON.stringify({
-      mode: enrolled.lifecycle
-        ? "lifecycle-run"
-        : enrolled.joinCode
-          ? "provision-run"
-          : "run",
+      mode: enrolled.checkpoint
+        ? "checkpoint-run"
+        : enrolled.lifecycle
+          ? "lifecycle-run"
+          : enrolled.joinCode
+            ? "provision-run"
+            : "run",
       endpoint: endpoint.toString(),
       rootPEM: certificate,
       issuer: context.bindings.TELESTRA_CONTROL_ISSUER,
@@ -220,6 +223,79 @@ async function agent(
     },
   };
 }
+
+scenario(
+  "NODE-02",
+  "go-credential-checkpoint-reopen-and-resume",
+  "loopback-tls-workerd-go-checkpoint-v2",
+  "Goが履歴を開き直し、メモリ内の資格を確認情報へ照合して接続世代を引き継ぐ",
+  async () => {
+    const tls = tlsMaterial();
+    const context = await fixture(tls);
+    let node: Awaited<ReturnType<typeof agent>> | undefined;
+    try {
+      const target = await device("tuner-go-checkpoint-01");
+      const operator = await context.mint("operator-local");
+      assert.equal((await context.register(target, operator)).status, 201);
+      const joinCode = await context.challenge(target, operator);
+      node = await agent(
+        context,
+        { target, joinCode, checkpoint: true },
+        tls.certificate,
+      );
+      const rotated = await node.wait((r) => r.state === "rotated");
+      const restored = await node.wait((r) => r.state === "restored");
+      assert.equal(restored.generation, rotated.generation);
+      await node.wait((r) => r.state === "connected");
+      const row = await context.database
+        .prepare(
+          "SELECT credential_version,session_epoch,capabilities FROM nodes WHERE node_id=?",
+        )
+        .bind(target.nodeId)
+        .first<{
+          credential_version: number;
+          session_epoch: number;
+          capabilities: string;
+        }>();
+      assert.equal(row?.credential_version, restored.generation);
+      assert.equal(row?.session_epoch, 2);
+      assert.equal(
+        (
+          JSON.parse(row?.capabilities ?? "{}") as {
+            resume?: { lastSessionEpoch: number };
+          }
+        ).resume?.lastSessionEpoch,
+        1,
+      );
+      const events = await context.database
+        .prepare(
+          "SELECT count(*) AS count FROM identity_audit WHERE node_id=? AND action IN ('node.join','node.rotate')",
+        )
+        .bind(target.nodeId)
+        .first<{ count: number }>();
+      assert.equal(events?.count, 2);
+      assert.equal(
+        (
+          await context.browser(`/nodes/${target.nodeId}/revoke`, operator, {
+            method: "POST",
+            body: {},
+          })
+        ).status,
+        200,
+      );
+      const done = await node.wait((r) => r.done === true);
+      assert.equal(done.code, "credentials");
+      assert.equal(done.epoch, 2);
+      assert.equal(context.egress, 0);
+    } finally {
+      try {
+        await node?.close();
+      } finally {
+        await context.close();
+      }
+    }
+  },
+);
 
 scenario(
   "NODE-02",

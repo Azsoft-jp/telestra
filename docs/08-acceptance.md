@@ -6,6 +6,8 @@ Phase 00のローカルMock実行結果は[検証報告](phase-00-report.md)を�
 
 Phase 01のローカルHTTP・DO WebSocket試験は[実装状況](phase-01-progress.md)に記録する。`NODE-01`、`SEC-01/02/03/04`のローカル境界と、`NODE-02`のサーバー側再開・無通信切断を検証した。Goの署名と永続履歴は[ADR-015](architecture/decisions/ADR-015-go-wire-and-command-journal.md)の範囲で検証した。GoのループバックTLSによるWSS接続・再接続は[ADR-016](architecture/decisions/ADR-016-go-wss-transport.md)、参加・資格更新は[追加のTLS相互試験](phase-01-provisioning.md)、接続中の更新は[Lifecycleの加速試験](phase-01-lifecycle.md)で検証した。既定間隔の長時間運転、確定予約の実行、実IdP、実環境WSSは未検証で、Phase 01全体は未完了である。
 
+資格確認情報の再読込は[履歴v2の試験](phase-01-checkpoint.md)で追加検証した。同一プロセス内のWorker再接続と、子プロセス途中終了による記録保持を区別する。本番KeyProviderを伴う完全な再起動復旧は未検証である。
+
 | ID | 合格条件 | 推奨Phase |
 | --- | --- | --- |
 | CORE-01 | Mock Tuner/Storeで権利問題なくend-to-end実行 | 00 |

@@ -168,6 +168,26 @@ func (f *controlFixture) client(t *testing.T, handler http.HandlerFunc, journal 
 	if err != nil {
 		t.Fatal(err)
 	}
+	// 命令履歴を先に用意する試験でも、登録済み資格を明示してから接続試験へ進む。
+	binding, err := credentialBinding("https://"+strings.TrimSuffix(strings.TrimPrefix(endpoint, "wss://"), "/agent"), f.verifier, f.identity, f.deviceKey, "device-test-key")
+	if err != nil {
+		t.Fatal("試験の端末束縛を作れません")
+	}
+	if _, exists, err := journal.loadEnrollment(binding); err != nil {
+		t.Fatal("試験の端末束縛を読めません")
+	} else if !exists {
+		credential, err := f.verifier.VerifyCredential(f.credential, f.identity, time.Now())
+		if err != nil {
+			t.Fatal("試験資格を検証できません")
+		}
+		operation, err := journal.beginCredential(binding, 0)
+		if err != nil {
+			t.Fatal("試験の参加を開始できません")
+		}
+		if err := journal.finishCredential(binding, operation, f.credential, 0, credential.Version); err != nil {
+			t.Fatal("試験の参加を確定できません")
+		}
+	}
 	client, err := NewClient(ClientConfig{Transport: transport, Verifier: f.verifier, Identity: f.identity, Credential: f.credential, DeviceKey: f.deviceKey, DeviceKeyID: "device-test-key", Journal: journal, AgentVersion: "phase01-local"})
 	if err != nil {
 		t.Fatal(err)
