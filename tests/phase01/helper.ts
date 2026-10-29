@@ -21,14 +21,17 @@ export async function device(nodeId: string) {
 export type Device = Awaited<ReturnType<typeof device>>;
 
 // 外向き通信を拒否したWorkerと専用D1を作り、本番のIdPや資格を使わずに検証する。
-export async function fixture(tls?: { certificate: string; key: string }) {
+export async function fixture(
+  tls?: { certificate: string; key: string },
+  browserOrigins: readonly string[] = [origin],
+) {
   const directory = await mkdtemp(join(tmpdir(), "tv-phase01-"));
   const oidc = await device("oidc-local");
   const signer = await device("control-local");
   const bindings = {
     TELESTRA_ENVIRONMENT: "development",
     TELESTRA_TENANT_ID: tenantId,
-    TELESTRA_ALLOWED_ORIGINS: JSON.stringify([origin]),
+    TELESTRA_ALLOWED_ORIGINS: JSON.stringify(browserOrigins),
     TELESTRA_OIDC_ISSUER: "https://idp.example.test",
     TELESTRA_OIDC_AUDIENCE: "tv-api",
     TELESTRA_OIDC_JWKS: JSON.stringify({ keys: [oidc.publicJwk] }),
@@ -220,6 +223,28 @@ export async function fixture(tls?: { certificate: string; key: string }) {
     bindings,
     signer,
     mint,
+    // Mock IdPのcode交換でだけ使い、ID TokenをAPIのAccess Tokenと混同しない。
+    mintIdToken: async (
+      subject: string,
+      nonce: string,
+      overrides: Record<string, unknown> = {},
+      key = oidc.privateKey,
+    ) =>
+      new SignJWT({
+        iss: bindings.TELESTRA_OIDC_ISSUER,
+        aud: "telestra-browser-local",
+        sub: subject,
+        iat: now(),
+        exp: now() + 600,
+        nonce,
+        ...overrides,
+      })
+        .setProtectedHeader({
+          alg: "EdDSA",
+          kid: oidc.publicJwk.kid,
+          typ: "JWT",
+        })
+        .sign(key),
     browser,
     agent,
     deviceProof,

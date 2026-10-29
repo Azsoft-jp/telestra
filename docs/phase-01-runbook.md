@@ -37,6 +37,10 @@ GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off npm run check
 
 Goの再接続・署名・永続履歴試験は`artifacts/go-results.json`と`artifacts/go-test-output.txt`へ含める。GoとWorkerの相互検証は固定したfixtureコマンドを使う。鍵とTokenはIPCだけで受け渡し、コマンドの出力をログへ転記しない。WSS試験用の固定コマンドは、ループバック以外への接続を拒否する。試験TLS鍵と証明書もIPCで渡し、ファイルへ保存しない。Workerの停止・再起動で同じ接続先への再接続を確認する。確定予約と媒体の実行は行わない。
 
+## 利用者のPKCE
+
+[public clientの追加試験](phase-01-browser-auth.md)で、認可コード交換から既存のAPIセッションまでを検証する。fetchを注入したMock IdPを使い、実ブラウザの画面遷移やCORSを試験したものではない。クライアントを保持する画面が失われると進行中の認可と資格も失う。秘密値をWeb Storageへ保存して復元する手順は設けない。
+
 ## 管理とNodeの境界
 
 資格変更の確認情報は[履歴v2の試験](phase-01-checkpoint.md)を参照する。同一プロセス内の再初期化に加え、[別Goプロセスの復元と更新後の強制終了](phase-01-process-restart.md)も検証する。親のメモリと専用IPCを使う試験であり、秘密値の保管Providerはまだ実装していない。

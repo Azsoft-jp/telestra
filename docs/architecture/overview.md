@@ -23,7 +23,7 @@ flowchart LR
 | TunerNode | 既存API、TS受信・スプール・転送、確定予約、制御接続 | GoのMockとWSS。実受信と予約実行は未実装 |
 | EncodeNode | 能力登録、事後変換、字幕・音声の時間管理、派生物 | 模擬変換のみ |
 | StorageAdapter | 対象を限定したobject操作とhash/length検証 | インメモリFake。R2/S3は計画中 |
-| Control | 利用者・Nodeの認証、認可、台帳、接続世代 | ローカルWorker/D1/DO。実IdPのPKCEは未実装 |
+| Control | 利用者・Nodeの認証、認可、台帳、接続世代 | ローカルWorker/D1/DOとMock PKCE。実IdPとログイン画面は未検証・未実装 |
 | Web | 状態表示、EPG、予約、視聴、端末保存 | ローカルDemoのみ。本体の視聴UIとPWAは計画中 |
 
 原本の録画、再生用メディア、制御プレーンを混同しない。TS原本チャンクをHLSへそのまま並べず、字幕・音声・timelineEpochを保った派生物を作る。変換できない場合も原本保存を独立して継続する設計とする。

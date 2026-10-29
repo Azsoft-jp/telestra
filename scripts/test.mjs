@@ -9,7 +9,7 @@ import { evaluateAcceptance } from "./acceptance-gate.ts";
 const phase01 = process.argv.includes("--phase01");
 const phase = phase01 ? "01" : "00";
 const environment = phase01
-  ? "local-workerd + local-D1 + memory Mock IdP + loopback Go WSS/TLS; outward fetch denied"
+  ? "local-workerd + local-D1 + memory Mock IdP/public-client PKCE + loopback Go WSS/TLS; outward fetch denied"
   : "local-mock; no tuner/cloud/real media connection";
 const run = new Date().toISOString().replaceAll(":", "-");
 const directory = `artifacts/runs/phase${phase}-${run}`;
@@ -128,7 +128,7 @@ const report = {
       : { status: "fail", code: "INVALID_EVIDENCE" },
   ),
   scope: phase01
-    ? "Local HTTP + DO WebSocket + Go loopback WSS/TLS identity, provisioning, rotation, process restart, reconnect, replay and bounded command checks; production KeyProvider, PKCE flow, deployed IdP, Capture Permit verification and production validation pending"
+    ? "Local HTTP + memory public-client PKCE/API sessions + DO WebSocket + Go loopback WSS/TLS identity, provisioning, rotation, process restart, reconnect, replay and bounded command checks; login UI, browser redirects/CORS, production KeyProvider, deployed IdP, Capture Permit verification and production validation pending"
     : "Mock contracts only; no full security, codec, ARIB, PWA, DR or SLO certification",
 };
 writeFileSync(

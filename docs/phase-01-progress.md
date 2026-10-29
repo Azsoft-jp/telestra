@@ -93,3 +93,7 @@ Goからjoin/rotateを呼び、更新後の資格でWSSへ接続する実装を�
 ## 別Goプロセスでの復元
 
 [プロセス再起動の試験](phase-01-process-restart.md)で、別プロセスへの資格復元と、Workerの更新成立後にSIGKILLした場合の旧資格の拒否を追加した。秘密値は親のメモリと専用IPCで扱う。上記の完全な再起動復旧が残るという記述のうち、Goプロセスの終了・再起動をローカルWorkerと組み合わせた試験を補った。本番KeyProvider、OS再起動・電源断・ディスク停止、実環境での復旧は引き続き未検証である。
+
+## public clientのPKCEとAPIセッション
+
+[利用者認可の追加実装](phase-01-browser-auth.md)で、メモリ内のstate・nonce・S256によるコード交換を既存のBearer APIへ結んだ。上記のPKCE未実装という記述のうち、Mock IdPでのprotocol経路を補った。別originと再読込で資格を引き継がず、失効・権限・通信断・ログアウト未確認を区別する。ログイン画面、実ブラウザの戻し方とCORS、実IdP、本番KeyProviderは引き続き未実装または未検証である。

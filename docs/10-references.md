@@ -39,6 +39,15 @@
 - [b24tovtt](https://github.com/xtne6f/b24tovtt) — ARIB情報を特殊cueへ保つWebVTT方式の候補。
 - [RFC 8216 HLS](https://www.rfc-editor.org/rfc/rfc8216) — セグメント、時刻、discontinuity。
 
+## 利用者認証の追加参照
+
+2026年10月29日に公式仕様を参照した。ローカルprofileの実装判断は[ADR-023](architecture/decisions/ADR-023-browser-pkce-memory-session.md)へ記録する。
+
+- [RFC 7636](https://www.rfc-editor.org/rfc/rfc7636.html)の4章と付録B。S256のcode verifierと既知vector。
+- [RFC 9700](https://www.rfc-editor.org/info/rfc9700/)の2.1.1節と4.8節。PKCEの使用とdowngrade防止。
+- [RFC 9207](https://www.rfc-editor.org/rfc/rfc9207.html)の2.4節。認可応答issuerの照合。
+- [OpenID Connect Core 1.0 errata set 2](https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation)のID Token Validation節。ID Tokenのissuer・audience・署名・nonce・期限。
+
 ## 追加検証
 
 - KonomiTVや字幕ライブラリのライセンス（バイナリ依存物まで）、配布義務。
