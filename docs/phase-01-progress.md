@@ -113,3 +113,7 @@ Goからjoin/rotateを呼び、更新後の資格でWSSへ接続する実装を�
 ## Capture Permit v2の署名検証
 
 [ADR-026](architecture/decisions/ADR-026-capture-permit-v2-proposal.md)で、ユーザーが選択したCompact JWS v2と世代分離を採用した。[検証器と試験](capture-permit-v2-verification.md)を追加し、Go・Node.js・実workerdで署名と対象・世代・時刻を照合する。旧v1の制御命令は維持する。DESIGN試験の実行モデル、署名付きpolicyの永続化、Storage Grant、予約実行、オフライン録画、canonical公開は未実装である。
+
+## Node認可世代の保存
+
+[ADR-027](architecture/decisions/ADR-027-node-authorization-epoch.md)で、認可世代をCredential世代と別にD1へ保存する。[移行と境界試験](node-authorization-epoch.md)では通常rotateによる維持、再参加・失効による進行、上限、書込失敗、競合、再起動を確認する。これはpolicyの配信・Nodeキャッシュや実録画を有効にする変更ではない。

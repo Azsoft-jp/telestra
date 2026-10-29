@@ -24,6 +24,7 @@ export type Device = Awaited<ReturnType<typeof device>>;
 export async function fixture(
   tls?: { certificate: string; key: string },
   browserOrigins: readonly string[] = [origin],
+  migrationVersion: 1 | 2 = 2,
 ) {
   const directory = await mkdtemp(join(tmpdir(), "tv-phase01-"));
   const oidc = await device("oidc-local");
@@ -73,17 +74,19 @@ export async function fixture(
   let mf = new Miniflare(options);
   let database = await mf.getD1Database("TELESTRA_DB");
   // 固定した移行ファイルだけを適用する。入力からSQLやファイル名を組み立てない。
-  const sql = await readFile(
-    "apps/control/migrations/0001-identity.sql",
-    "utf8",
-  );
-  const statements = sql
-    .split(";")
-    .map((value) => value.trim())
-    .filter(Boolean);
-  await database.batch(
-    statements.map((statement) => database.prepare(statement)),
-  );
+  for (const migration of [
+    "0001-identity.sql",
+    "0002-authorization-epoch.sql",
+  ].slice(0, migrationVersion)) {
+    const sql = await readFile(`apps/control/migrations/${migration}`, "utf8");
+    const statements = sql
+      .split(";")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    await database.batch(
+      statements.map((statement) => database.prepare(statement)),
+    );
+  }
   for (const [subject, role] of [
     ["operator-local", "operator"],
     ["recorder-local", "recorder"],

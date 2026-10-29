@@ -29,6 +29,7 @@ export interface NodeRow {
   node_role: "tuner" | "encoder";
   public_jwk: string;
   credential_version: number;
+  authorization_epoch: number;
   session_epoch: number;
   status: "pending" | "active" | "revoked";
 }
@@ -112,11 +113,21 @@ export function role(actor: User, allowed: readonly UserRole[]): void {
 // 家庭と環境を条件に含め、同じNode IDでも別の台帳を参照させない。
 export async function nodeRow(env: Env, nodeId: string): Promise<NodeRow> {
   const value = await env.TELESTRA_DB.prepare(
-    "SELECT node_id,node_role,public_jwk,status,credential_version,session_epoch FROM nodes WHERE environment=? AND tenant_id=? AND node_id=?",
+    "SELECT node_id,node_role,public_jwk,status,credential_version,authorization_epoch,session_epoch FROM nodes WHERE environment=? AND tenant_id=? AND node_id=?",
   )
     .bind(env.TELESTRA_ENVIRONMENT, env.TELESTRA_TENANT_ID, nodeId)
     .first<NodeRow>();
   if (!value) throw authFailure();
+  // 未移行・欠損・不正な認可世代を1へ補完せず、保存状態の修復が必要として拒否する。
+  if (
+    !Number.isSafeInteger(value.authorization_epoch) ||
+    value.authorization_epoch < 1
+  )
+    throw new BoundaryError(
+      "INVALID_AUTHORIZATION_STATE",
+      "Nodeの認可状態を確認できません。管理者による確認が必要です。",
+      503,
+    );
   return value;
 }
 export async function node(

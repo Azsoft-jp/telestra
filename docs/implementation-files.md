@@ -2,7 +2,7 @@
 
 添付ZIPとの差分。Phase 00、Phase 01、Telestraの名称・導入・公開整備を含む。依存物、検証成果物、Git内部、秘密値、一時状態を除外する。PRIVATE側のファイルは別リポジトリで管理する。
 
-変更6件、追加235件、削除0件。
+変更6件、追加239件、削除0件。
 
 ## 既存ファイルの変更
 
@@ -14,6 +14,11 @@
 - [scripts/validate_package.py](../scripts/validate_package.py)
 
 ## 追加ファイル
+
+- [apps/control/migrations/0002-authorization-epoch.sql](../apps/control/migrations/0002-authorization-epoch.sql)
+- [tests/phase01/authorization-epoch.test.ts](../tests/phase01/authorization-epoch.test.ts)
+- [docs/architecture/decisions/ADR-027-node-authorization-epoch.md](../docs/architecture/decisions/ADR-027-node-authorization-epoch.md)
+- [docs/node-authorization-epoch.md](../docs/node-authorization-epoch.md)
 
 - [contracts/capture-permit-v2.schema.json](../contracts/capture-permit-v2.schema.json)
 - [docs/capture-permit-v2-verification.md](../docs/capture-permit-v2-verification.md)
