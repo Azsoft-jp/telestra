@@ -133,9 +133,12 @@ export async function agent(
     processMode?: "persist-run" | "restore-run";
     checkpointId?: string;
     endpoint?: string;
+    nodeRole?: "tuner" | "encoder";
   },
   certificate: string,
 ) {
+  // 期待Roleは試験の固定構成から取り、受信Tokenの申告値で検証条件を変えない。
+  const nodeRole = enrolled.nodeRole ?? "tuner";
   const key = await exportJWK(enrolled.target.privateKey);
   const ready = await context.mf.ready;
   const endpoint = enrolled.endpoint
@@ -254,7 +257,7 @@ export async function agent(
             claims.nodeId !== enrolled.target.nodeId ||
             claims.tenantId !== tenantId ||
             claims.environment !== "development" ||
-            claims.nodeRole !== "tuner" ||
+            claims.nodeRole !== nodeRole ||
             claims.credentialVersion !== value.generation
           )
             throw new Error("資格の端末境界が不正です。");
@@ -289,7 +292,7 @@ export async function agent(
         NodeID: enrolled.target.nodeId,
         TenantID: tenantId,
         Environment: "development",
-        Role: "tuner",
+        Role: nodeRole,
       },
       credential: enrolled.credential?.accessToken ?? "",
       joinCode: enrolled.joinCode ?? "",

@@ -2,7 +2,7 @@
 
 添付ZIPとの差分。Phase 00、Phase 01、Telestraの名称・導入・公開整備を含む。依存物、検証成果物、Git内部、秘密値、一時状態を除外する。PRIVATE側のファイルは別リポジトリで管理する。
 
-変更6件、追加213件、削除0件。
+変更6件、追加216件、削除0件。
 
 ## 既存ファイルの変更
 
@@ -14,6 +14,10 @@
 - [scripts/validate_package.py](../scripts/validate_package.py)
 
 ## 追加ファイル
+
+- [nodes/tuner/control/encoder_test.go](../nodes/tuner/control/encoder_test.go)
+- [tests/phase01/go-encoder.test.ts](../tests/phase01/go-encoder.test.ts)
+- [docs/phase-01-role-audit.md](../docs/phase-01-role-audit.md)
 
 - [apps/control/body.ts](../apps/control/body.ts)
 - [tests/phase01/body.test.ts](../tests/phase01/body.test.ts)

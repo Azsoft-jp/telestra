@@ -105,3 +105,7 @@ Goからjoin/rotateを呼び、更新後の資格でWSSへ接続する実装を�
 ## 制御APIの本文読み取り
 
 [本文期限の追加実装](phase-01-body-limits.md)で、WorkerとDOの読み取りを5秒・8192バイト・16384回に制限し、中断と失敗時の回収要求を加えた。実loopback HTTPで途中停止の408、D1未更新、次の正常要求を確認した。認証前の負荷、API全体の期限、実環境の切断とDoS耐性は未検証である。
+
+## 条件照合とEncodeNode役
+
+[Phase 01の条件照合](phase-01-role-audit.md)で、タスク6項目と完了条件をコード・試験へ対応させた。Goの試験構成を両Roleへ対応させ、EncodeNode役の参加・更新・Heartbeat・再接続・別プロセス復元・失効と、録画命令の拒否を確認した。これは共通制御コードの検証であり、EncodeNodeの製品Agent・実変換を追加したものではない。Node起動・本番KeyProvider、実環境、Capture Permitの未決定事項は残る。
