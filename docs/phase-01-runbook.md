@@ -39,6 +39,8 @@ Goの再接続・署名・永続履歴試験は`artifacts/go-results.json`と`ar
 
 ## 管理とNodeの境界
 
+Goの参加・資格更新も同じloopback TLSの試験へ含める。応答喪失時の隔離、管理者による再参加、サイズ・署名・世代・中断の拒否条件は[資格更新の記録](phase-01-provisioning.md)を参照する。
+
 Workerには`development`以外を拒否するガードがあり、本番用のデプロイ設定は提供していない。手動起動で本番のTokenや鍵を設定せず、試験fixtureを利用する。
 
 Nodeの`/agent`はBearer資格と端末鍵の一回限りの接続証明で認証し、Originを持つBrowser接続を拒否する。利用者の管理操作は許可Originとoperator/adminを要求する。接続状態は`/nodes/:nodeId/connection`、限定命令は`POST /nodes/:nodeId/commands`で扱う。HTTP 202は送信待ちへの登録を表し、録画の実行成功を表さない。

@@ -140,7 +140,7 @@ func Run(ctx context.Context, policy Policy, dependencies Dependencies) (Outcome
 			update(Completed)
 			return result, nil
 		}
-		if errors.Is(err, ErrCredentials) || errors.Is(err, ErrProtocol) {
+		if errors.Is(err, ErrCredentials) || errors.Is(err, ErrProtocol) || errors.Is(err, ErrRecoveryRequired) {
 			update(Failed)
 			return result, err
 		}

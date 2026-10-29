@@ -10,3 +10,4 @@
 - [ADR-016-go-wss-transport](ADR-016-go-wss-transport.md)
 - [ADR-017-telestra-public-readiness](ADR-017-telestra-public-readiness.md)
 - [ADR-018-public-private-deployment](ADR-018-public-private-deployment.md)
+- [ADR-019-go-node-provisioning](ADR-019-go-node-provisioning.md)

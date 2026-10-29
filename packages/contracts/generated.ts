@@ -170,6 +170,11 @@ export type ControlMap = {
 "code": string;
 "proof": string; };
 "RotateNode": { "proof": string; };
+"CredentialResponse": { "nodeId": string;
+"nodeRole": "tuner" | "encoder";
+"credentialVersion": number;
+"expiresAt": number;
+"accessToken": string; };
 "UserClaims": { "iss": string;
 "aud": string;
 "sub": string;

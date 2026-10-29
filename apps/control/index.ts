@@ -126,13 +126,15 @@ async function credential(env: Env, row: NodeRow): Promise<Response> {
     claims,
     env.TELESTRA_CONTROL_PRIVATE_JWK,
   );
-  return json({
-    nodeId: row.node_id,
-    nodeRole: row.node_role,
-    credentialVersion: row.credential_version,
-    expiresAt: claims.exp,
-    accessToken,
-  });
+  return json(
+    validateControl("CredentialResponse", {
+      nodeId: row.node_id,
+      nodeRole: row.node_role,
+      credentialVersion: row.credential_version,
+      expiresAt: claims.exp,
+      accessToken,
+    }),
+  );
 }
 
 async function route(request: Request, env: Env): Promise<Response> {
