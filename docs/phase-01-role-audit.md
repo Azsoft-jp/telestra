@@ -9,7 +9,7 @@
 | 1. 両Nodeのjoin/issue/rotate/revoke、能力登録、Heartbeat | [資格更新試験](phase-01-provisioning.md)、[Goの相互試験](../tests/phase01/go-wss.test.ts)、今回の[EncodeNode役の試験](../tests/phase01/go-encoder.test.ts)。発行をWorkerで行い、Go側で役割を照合する | 製品としてのAgent起動・鍵供給、本番の能力検出。試験Goは能力なし・同時処理0件を広告する |
 | 2. outbound WSS、世代、resumption、backoff、jitter、backpressure | [再接続Runner](../nodes/tuner/control/reconnect_test.go)、[WSS相互試験](../tests/phase01/go-wss.test.ts)、[DO試験](../tests/phase01/websocket.test.ts)。未ACK8件・履歴32件の制限と再送を検査 | 実Cloudflare、実経路、長時間・並行負荷、DOのhibernation単体。本番の履歴整理も未決定 |
 | 3. OIDC利用者API、RBAC、resource-level authorization | [Mock PKCE](phase-01-browser-auth.md)、[実Chromium](phase-01-popup.md)、[利用者・録画所有者の拒否試験](../tests/phase01/identity.test.ts) | 実IdP、MFA、公開鍵更新、モバイルPWA、本体全画面の認証UX |
-| 4. 型別Schema、署名、期限、限定命令 | [制御契約](../packages/control-contracts/channel.ts)、[Go検証](../nodes/tuner/wire/channel.go)、[相互署名試験](../tests/phase01/go-wire.test.ts)。Encoderへの録画命令はWorkerとGoで拒否する | 外側JWSの検証と内側Capture Permitの暗号検証は別物。Permitの正規化・失効・オフライン実行は未実装 |
+| 4. 型別Schema、署名、期限、限定命令 | [制御契約](../packages/control-contracts/channel.ts)、[Go検証](../nodes/tuner/wire/channel.go)、[相互署名試験](../tests/phase01/go-wire.test.ts)。Encoderへの録画命令はWorkerとGoで拒否する | 外側JWSの検証と内側Capture Permitの暗号検証は別物。v2の独立した署名検証器を追加したが、policy永続化・失効配信・オフライン実行は未実装 |
 | 5. 失効、Origin、CSRF/SSRF防御、負荷・サイズ | [WS否定試験](../tests/phase01/websocket.test.ts)、[本文の制限](phase-01-body-limits.md)。Cookieだけで認証せず、Token内のURLで鍵や接続先を選ばない | 認証前の負荷、API全体の期限、本番DoS耐性、実XSS・侵入試験 |
 | 6. controlと動画transferの分離 | [Go Client](../nodes/tuner/control/client.go)は型付き制御だけを扱い、Binaryを拒否する。Phase 00の媒体Mockは別経路である | 実TS転送とStorage Grantを用いるデータ面はPhase 02以降 |
 
@@ -48,10 +48,10 @@ GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off npm run check
 
 Nodeの本番起動と復旧には、対象OS、鍵・資格の保管と供給Provider、復旧権限を確定する必要がある。これは[ADR-021](architecture/decisions/ADR-021-node-credential-checkpoint.md)の未決定事項を維持する。両Nodeの本番Agentや秘密値の保管を、試験fixtureで代用して完成済みとはしない。
 
-Capture Permitは[ADR-012](architecture/decisions/ADR-012-contract-discrepancies.md)の質問候補に従い、署名対象、家庭・環境・世代、必須scope、Storage Grant、失効中のオフライン範囲を決める必要がある。既存ドラフトへ暗黙に項目を足さず、互換性と拒否試験を伴う提案として準備する。
+Capture Permitの署名形式と認可世代は[ADR-026](architecture/decisions/ADR-026-capture-permit-v2-proposal.md)で確定した。v2の署名対象と必須scopeを独立した検証器で照合する。Storage Grantと失効中のオフライン実行は引き続き未実装で、既存v1の命令は変更しない。
 
 今回の手書きコードの変更はGoの試験2ファイルとNodeの試験2ファイルである。条件照合、進捗、受け入れ基準、runbook、変更履歴、[全変更一覧](implementation-files.md)も更新する。本番デプロイ、実IdP、実チューナー、実録画には接続していない。
 
 ## Capture Permitの提案
 
-[ADR-026](architecture/decisions/ADR-026-capture-permit-v2-proposal.md)と[候補仕様](proposals/capture-permit-v2/README.md)へ署名形式・世代・失効・オフライン・互換性を具体化した。状態は提案・未採用で、DESIGN試験を実行許可やPhase 02の合格へ読み替えない。
+[ADR-026](architecture/decisions/ADR-026-capture-permit-v2-proposal.md)と[候補仕様](proposals/capture-permit-v2/README.md)へ署名形式・世代・失効・オフライン・互換性を具体化した。ユーザーの回答によりCompact JWS v2と世代分離を採用した。[v2の独立検証器](capture-permit-v2-verification.md)をPERMIT試験で検証する。DESIGN試験の実行モデルやStorage権限は引き続き未実装で、実行許可やPhase 02の合格へ読み替えない。

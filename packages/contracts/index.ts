@@ -4,6 +4,7 @@ import { Ajv2020 } from "ajv/dist/2020.js";
 import { fullFormats } from "ajv-formats/dist/formats.js";
 import type {
   CapturePermit,
+  CapturePermitV2,
   DeploymentProfile,
   MockCapture,
   MockPlayback,
@@ -28,25 +29,30 @@ const ajv = new Ajv2020({
 });
 for (const [name, format] of Object.entries(fullFormats))
   ajv.addFormat(name, format);
+// 登録済み$idをファイル名へ対応させ、v1とv2の名前空間を区別する。入力から参照先を取得しない。
+const schemaIds = new Map<string, string>();
 const directory = new URL("../../contracts/", import.meta.url);
 for (const file of readdirSync(directory).filter((f) =>
   f.endsWith(".schema.json"),
 )) {
-  ajv.addSchema(
-    JSON.parse(readFileSync(new URL(file, directory), "utf8")) as object,
-  );
+  const document = JSON.parse(
+    readFileSync(new URL(file, directory), "utf8"),
+  ) as { $id: string };
+  schemaIds.set(file, document.$id);
+  ajv.addSchema(document);
 }
 // 未使用のドラフトも含めてSchemaをコンパイルする。外部の参照先は取得しない。
 for (const file of readdirSync(directory).filter((f) =>
   f.endsWith(".schema.json"),
 )) {
-  if (!ajv.getSchema(base + file))
+  if (!ajv.getSchema(schemaIds.get(file) ?? ""))
     throw new Error("スキーマを読み込めません。");
 }
 
 interface SchemaTypes {
   "node-envelope": NodeEnvelopeBase;
   "capture-permit": CapturePermit;
+  "capture-permit-v2": CapturePermitV2;
   "deployment-profile": DeploymentProfile;
   "recording-manifest": RecordingManifest;
   "mock-capture": MockCapture;
@@ -95,7 +101,7 @@ export function validate<N extends keyof SchemaTypes>(
   value: unknown,
 ): SchemaTypes[N] {
   assertSize(value, name === "mock-capture" ? 2_097_152 : 1_048_576);
-  schemaCheck(`${base}${name}.schema.json`, value);
+  schemaCheck(schemaIds.get(`${name}.schema.json`) ?? "", value);
   return value as SchemaTypes[N];
 }
 

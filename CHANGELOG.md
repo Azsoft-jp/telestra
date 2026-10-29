@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+ユーザーが選択したCapture Permit v2のCompact JWSと認可世代の分離を採用する。専用Schema、Go・TypeScript検証器、Node.js・Go・実workerdの相互試験を追加する。v1の制御命令は維持し、policy永続化とStorage Grantを検証するまで録画実行を有効にしない。
+
 Telestraへ名称を統一し、CLI、npmパッケージ、Go import、TELESTRA_構成を整理する。MITを採用し、Azsoft-jpのPUBLIC/PRIVATE運用、導入4モード、README、ガバナンス、公開前検査を追加する。Demoは合成結果を表示するローカル専用UIで、実放送や映像再生を含まない。
 
 Phase 00ではMock Tuner、原本チャンク、Fake Storage、模擬変換、契約試験を追加した。Phase 01ではローカルWorker/D1/DOの認証とGoの署名付きWSS、再接続、永続履歴を実装した。本体の残作業と検証範囲は[実装状況](docs/phase-01-progress.md)にある。
@@ -22,6 +24,6 @@ popupでの認可結果復帰と、loopback TLS上の実Chromium試験を追加�
 
 共通Go制御コードをEncodeNode役で検証し、試験構成とIPCの期待Roleを照合する。15秒のHeartbeat、更新後の再接続、別プロセス復元、録画命令の拒否を追加試験する。EncodeNodeの製品Agentや変換処理は追加していない。
 
-Capture Permit v2の未採用提案、候補Schema、合成モデル、DESIGN試験を追加する。署名形式と認可世代は回答前に確定せず、現行v1と録画実行は変更しない。
+Capture Permit v2の比較資料、未実装の実行モデル、DESIGN試験を追加する。回答で採用した署名形式と世代分離はADR-026へ反映し、現行v1と録画実行は変更しない。
 
 JWT用途、Schema ID、v1のwire形式と永続履歴は名称変更でも維持する。旧npm名・Go import・内部環境変数は未公開の開発用であり、新しい名称を使う。既存のnpm run mockは継続する。安定版Releaseはまだ作成していない。

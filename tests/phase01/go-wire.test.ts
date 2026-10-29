@@ -315,6 +315,10 @@ scenario(
         join(directory, "contracts/capture-permit.schema.json"),
         readFileSync("contracts/capture-permit.schema.json"),
       );
+      writeFileSync(
+        join(directory, "contracts/capture-permit-v2.schema.json"),
+        readFileSync("contracts/capture-permit-v2.schema.json"),
+      );
       const generate = () =>
         spawnSync(
           process.execPath,

@@ -17,7 +17,7 @@ scenario(
   "unsigned-capture-permit-proposal-v2",
   "必須binding・scope・数値境界を検査し、v2候補は現行v1のAPIに採用されない",
   () => {
-    assert.equal(example.status, "proposed-not-adopted");
+    assert.equal(example.status, "partial-design-adopted-runtime-disabled");
     assert.equal(example.runtimeEnabled, false);
     const policy = samplePolicy();
     assert.equal(candidateOutcome(example.claims, policy), "model-online");

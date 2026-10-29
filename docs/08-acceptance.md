@@ -16,7 +16,7 @@ Phase 01のローカルHTTP・DO WebSocket試験は[実装状況](phase-01-progr
 
 [Phase 01の条件照合](phase-01-role-audit.md)では、両RoleのGo制御試験と製品Agentの実装を区別する。必要IDがあっても、確定予約の実行や本番の鍵供給まで合格とはしない。
 
-[Permit v2候補](proposals/capture-permit-v2/README.md)のDESIGN-01〜04は未採用提案のSchema・モデル・署名探索試験で、SEC-06やREL/MED、Phase 02の合格ではない。
+[Permit v2候補](proposals/capture-permit-v2/README.md)の署名形式と世代分離はユーザー回答により採用した。DESIGN-01〜04は実行条件のモデルと署名探索、[PERMIT-01/02/03](capture-permit-v2-verification.md)はv2の独立検証器の試験である。いずれもSEC-06やREL/MED、Phase 02の合格ではない。
 
 | ID | 合格条件 | 推奨Phase |
 | --- | --- | --- |

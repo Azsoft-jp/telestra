@@ -28,3 +28,7 @@ export declare function OidcCallback(value: unknown): boolean;
 export declare function ApiSession(value: unknown): boolean;
 export declare function BrowserCallbackMessage(value: unknown): boolean;
 export declare function BrowserCallbackAck(value: unknown): boolean;
+export declare function CapturePermitV2(value: unknown): boolean;
+export declare function CapturePermitV2Header(value: unknown): boolean;
+export declare function CapturePermitV2Key(value: unknown): boolean;
+export declare function CapturePermitV2Context(value: unknown): boolean;
