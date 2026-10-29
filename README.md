@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/brand/logo.svg" alt="Telestra" width="320" /></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo-dark.svg" /><img src="assets/brand/logo.svg" alt="Telestra" width="320" /></picture></p>
 
 <h1 align="center">Telestra</h1>
 <p align="center"><strong>Broadcast, unbound.</strong><br />録画を、ひとつの機器に閉じ込めない。</p>
