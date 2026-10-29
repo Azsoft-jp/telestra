@@ -42,7 +42,7 @@
     "miniflare": "4.20260730.0",
     "playwright": "1.64.1",
     "prettier": "3.9.10",
-    "typescript": "5.9.3"
+    "typescript": "7.0.2"
   },
   "license": "MIT",
   "description": "Cloudflare-firstの分散テレビ視聴・録画基盤。現在はローカルMockと制御契約を開発中。",
