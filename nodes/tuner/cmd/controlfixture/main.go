@@ -97,7 +97,7 @@ func run() (result error) {
 		return tlsMaterial()
 	}
 	endpoint, err := url.Parse(input.Endpoint)
-	if err != nil || (input.Mode != "run" && input.Mode != "provision-run") || !net.ParseIP(endpoint.Hostname()).IsLoopback() || endpoint.Port() == "" || len(input.RootPEM) > 8192 {
+	if err != nil || (input.Mode != "run" && input.Mode != "provision-run" && input.Mode != "lifecycle-run") || !net.ParseIP(endpoint.Hostname()).IsLoopback() || endpoint.Port() == "" || len(input.RootPEM) > 8192 {
 		return control.ErrProtocol
 	}
 	roots := x509.NewCertPool()
@@ -134,12 +134,13 @@ func run() (result error) {
 	defer stop()
 	ctx, cancel := context.WithTimeout(ctx, 90*time.Second)
 	defer cancel()
-	if input.Mode == "provision-run" {
+	var provisioner *control.Provisioner
+	if input.Mode == "provision-run" || input.Mode == "lifecycle-run" {
 		// 管理者は公開鍵登録と参加権利の発行だけを担当し、join/rotateの署名とHTTP通信はGoで行う。
 		if input.Credential != "" {
 			return control.ErrProtocol
 		}
-		provisioner, err := control.NewProvisioner(control.ProvisionConfig{Endpoint: "https://" + endpoint.Host, Roots: roots, Verifier: verifier, Identity: input.Identity, DeviceKey: ed25519.NewKeyFromSeed(seed), DeviceKeyID: input.DeviceKeyID})
+		provisioner, err = control.NewProvisioner(control.ProvisionConfig{Endpoint: "https://" + endpoint.Host, Roots: roots, Verifier: verifier, Identity: input.Identity, DeviceKey: ed25519.NewKeyFromSeed(seed), DeviceKeyID: input.DeviceKeyID})
 		if err != nil {
 			return err
 		}
@@ -154,37 +155,68 @@ func run() (result error) {
 		if err := emit(map[string]any{"state": "joined", "generation": joined.Version}); err != nil {
 			return err
 		}
-		if err := provisioner.Rotate(ctx); err != nil {
-			return err
-		}
-		credential, claims, err := provisioner.Current()
-		if err != nil {
-			return err
-		}
-		input.Credential = credential
-		if err := emit(map[string]any{"state": "rotated", "generation": claims.Version}); err != nil {
-			return err
+		if input.Mode == "provision-run" {
+			if err := provisioner.Rotate(ctx); err != nil {
+				return err
+			}
+			credential, claims, err := provisioner.Current()
+			if err != nil {
+				return err
+			}
+			input.Credential = credential
+			if err := emit(map[string]any{"state": "rotated", "generation": claims.Version}); err != nil {
+				return err
+			}
+		} else {
+			input.Credential, _, err = provisioner.Current()
+			if err != nil {
+				return err
+			}
 		}
 	} else if input.JoinCode != "" {
 		return control.ErrProtocol
 	}
-	client, err := control.NewClient(control.ClientConfig{Transport: transport, Verifier: verifier, Identity: input.Identity, Credential: input.Credential, DeviceKey: ed25519.NewKeyFromSeed(seed), DeviceKeyID: input.DeviceKeyID, Journal: journal, AgentVersion: "phase01-local-fixture"})
-	if err != nil {
-		return err
-	}
 	var outputErr error
-	outcome, runErr := control.Run(ctx, control.DefaultPolicy(), control.Dependencies{Dial: client.Dial, Observe: func(state control.State, attempt int) {
-		if err := emit(map[string]any{"state": state, "attempt": attempt}); err != nil {
-			outputErr = err
-			cancel()
+	var outcome control.Outcome
+	var runErr error
+	rotations := 0
+	if input.Mode == "lifecycle-run" {
+		// 相互試験では期限290秒前を指定し、約10秒で更新を確認する。本番の推奨設定ではない。
+		lifecycle, err := control.NewLifecycle(control.LifecycleConfig{Provisioner: provisioner, Transport: transport, Journal: journal, AgentVersion: "phase01-local-fixture", RenewBefore: 290 * time.Second, Observe: func(progress control.LifecycleOutcome) {
+			if err := emit(map[string]any{"state": progress.State, "attempt": progress.Attempts, "rotations": progress.Rotations, "generation": progress.CredentialVersion}); err != nil {
+				outputErr = err
+				cancel()
+			}
+		}})
+		if err != nil {
+			return err
 		}
-	}})
+		progress, err := lifecycle.Run(ctx)
+		runErr = err
+		outcome = control.Outcome{State: progress.State, Attempts: progress.Attempts}
+		rotations = progress.Rotations
+	} else {
+		client, err := control.NewClient(control.ClientConfig{Transport: transport, Verifier: verifier, Identity: input.Identity, Credential: input.Credential, DeviceKey: ed25519.NewKeyFromSeed(seed), DeviceKeyID: input.DeviceKeyID, Journal: journal, AgentVersion: "phase01-local-fixture"})
+		if err != nil {
+			return err
+		}
+		outcome, runErr = control.Run(ctx, control.DefaultPolicy(), control.Dependencies{Dial: client.Dial, Observe: func(state control.State, attempt int) {
+			if err := emit(map[string]any{"state": state, "attempt": attempt}); err != nil {
+				outputErr = err
+				cancel()
+			}
+		}})
+	}
 	epoch, err := journal.LastEpoch()
 	if err != nil {
 		return err
 	}
 	code := "transport"
-	if errors.Is(runErr, control.ErrCredentials) {
+	if errors.Is(runErr, control.ErrRecoveryRequired) {
+		code = "recovery-required"
+	} else if errors.Is(runErr, control.ErrSessionClose) {
+		code = "close-failed"
+	} else if errors.Is(runErr, control.ErrCredentials) {
 		code = "credentials"
 	} else if errors.Is(runErr, control.ErrProtocol) {
 		code = "protocol"
@@ -193,7 +225,7 @@ func run() (result error) {
 	} else if runErr == nil {
 		code = "completed"
 	}
-	if err := emit(map[string]any{"done": true, "state": outcome.State, "attempts": outcome.Attempts, "epoch": epoch, "code": code}); err != nil {
+	if err := emit(map[string]any{"done": true, "state": outcome.State, "attempts": outcome.Attempts, "rotations": rotations, "epoch": epoch, "code": code}); err != nil {
 		return err
 	}
 	return outputErr
