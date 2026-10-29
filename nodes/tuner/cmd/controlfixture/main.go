@@ -214,6 +214,8 @@ func run() (result error) {
 	code := "transport"
 	if errors.Is(runErr, control.ErrRecoveryRequired) {
 		code = "recovery-required"
+	} else if errors.Is(runErr, control.ErrSessionClose) {
+		code = "close-failed"
 	} else if errors.Is(runErr, control.ErrCredentials) {
 		code = "credentials"
 	} else if errors.Is(runErr, control.ErrProtocol) {

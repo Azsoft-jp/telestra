@@ -242,6 +242,21 @@ func TestLifecycleDoesNotHideCloseFailure(t *testing.T) {
 	}
 }
 
+func TestLifecycleStopsOnEarlyCloseFailure(t *testing.T) {
+	l, _, _ := lifecycleFixture(t, false)
+	l.sleep = func(context.Context, time.Duration) error { return nil }
+	l.random = func() (float64, error) { return 0, nil }
+	calls := 0
+	l.dial = func(context.Context, string) (Session, error) {
+		calls++
+		return &lifecycleSession{serve: func(context.Context) error { return ErrTransport }, close: func() error { return ErrTransport }}, nil
+	}
+	result, err := l.Run(context.Background())
+	if err == nil || result.State != Failed || result.Attempts != 1 || result.Rotations != 0 || calls != 1 {
+		t.Fatal("予定時刻前の接続解放失敗を再試行した")
+	}
+}
+
 func TestLifecycleRetryBudgetSurvivesRotation(t *testing.T) {
 	l, _, _ := lifecycleFixture(t, false)
 	l.config.Policy = Policy{BaseDelay: time.Millisecond, MaxDelay: time.Millisecond, MaxAttempts: 2}

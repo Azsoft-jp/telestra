@@ -92,7 +92,7 @@ func TestReconnectAndRelease(t *testing.T) {
 }
 
 func TestRetryLimitAndPermanentFailure(t *testing.T) {
-	for _, cause := range []error{ErrCredentials, ErrProtocol, ErrRecoveryRequired, errors.Join(ErrRecoveryRequired, ErrTransport), errors.New("通信断")} {
+	for _, cause := range []error{ErrCredentials, ErrProtocol, ErrSessionClose, ErrRecoveryRequired, errors.Join(ErrRecoveryRequired, ErrTransport), errors.New("通信断")} {
 		calls := 0
 		result, err := Run(context.Background(), Policy{time.Second, time.Second, 3}, Dependencies{
 			Dial:   func(context.Context) (Session, error) { calls++; return nil, cause },
@@ -100,7 +100,7 @@ func TestRetryLimitAndPermanentFailure(t *testing.T) {
 			Random: func() (float64, error) { return 0.5, nil },
 		})
 		expected := 1
-		if cause != ErrCredentials && cause != ErrProtocol && !errors.Is(cause, ErrRecoveryRequired) {
+		if cause != ErrCredentials && cause != ErrProtocol && cause != ErrSessionClose && !errors.Is(cause, ErrRecoveryRequired) {
 			expected = 3
 			if !errors.Is(err, ErrUnavailable) {
 				t.Fatal("再試行上限の失敗を返していない")
@@ -114,7 +114,7 @@ func TestRetryLimitAndPermanentFailure(t *testing.T) {
 
 func TestCancellationAndCloseFailure(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	connection := &fakeSession{serveErr: errors.New("切断"), closeErr: errors.New("解放失敗")}
+	connection := &fakeSession{serveErr: errors.New("切断")}
 	result, err := Run(ctx, DefaultPolicy(), Dependencies{
 		Dial:   func(context.Context) (Session, error) { return connection, nil },
 		Random: func() (float64, error) { cancel(); return 0.5, nil },
@@ -131,6 +131,16 @@ func TestCancellationAndCloseFailure(t *testing.T) {
 	result, err = Run(ctx, DefaultPolicy(), Dependencies{Dial: func(context.Context) (Session, error) { called = true; return nil, nil }})
 	if !errors.Is(err, context.Canceled) || called || result.Attempts != 0 {
 		t.Fatal("中断済みContextで接続した")
+	}
+}
+
+// 接続を解放できたか不明なら、中断待ちやbackoffへ進まず停止する。
+func TestCloseFailureStopsBeforeBackoff(t *testing.T) {
+	connection := &fakeSession{serveErr: ErrTransport, closeErr: errors.New("合成した解放失敗")}
+	waited := false
+	result, err := Run(context.Background(), DefaultPolicy(), Dependencies{Dial: func(context.Context) (Session, error) { return connection, nil }, Sleep: func(context.Context, time.Duration) error { waited = true; return nil }, Random: func() (float64, error) { waited = true; return 0, nil }})
+	if !errors.Is(err, ErrSessionClose) || result.State != Failed || result.Attempts != 1 || connection.closed != 1 || waited {
+		t.Fatal("解放失敗を通信障害として再試行した")
 	}
 }
 

@@ -12,10 +12,11 @@ import (
 )
 
 var (
-	ErrPolicy      = errors.New("再接続の設定を確認してください")
-	ErrCredentials = errors.New("Nodeの資格を更新してください")
-	ErrProtocol    = errors.New("制御プロトコルを確認してください")
-	ErrUnavailable = errors.New("接続試行の上限に達しました")
+	ErrPolicy       = errors.New("再接続の設定を確認してください")
+	ErrCredentials  = errors.New("Nodeの資格を更新してください")
+	ErrProtocol     = errors.New("制御プロトコルを確認してください")
+	ErrUnavailable  = errors.New("接続試行の上限に達しました")
+	ErrSessionClose = errors.New("制御接続の終了を確認できません")
 )
 
 // Policyは1回のRunに許す総試行回数を定める。短い接続成功で上限をリセットしない。
@@ -130,7 +131,9 @@ func Run(ctx context.Context, policy Policy, dependencies Dependencies) (Outcome
 				err = connection.Serve(ctx)
 			}
 			// ServeやDialが失敗しても、取得済み接続を必ず閉じてCloseの失敗も返す。
-			err = errors.Join(err, connection.Close())
+			if closeErr := connection.Close(); closeErr != nil {
+				err = errors.Join(err, ErrSessionClose, closeErr)
+			}
 		}
 		if ctx.Err() != nil {
 			update(Stopped)
@@ -140,7 +143,7 @@ func Run(ctx context.Context, policy Policy, dependencies Dependencies) (Outcome
 			update(Completed)
 			return result, nil
 		}
-		if errors.Is(err, ErrCredentials) || errors.Is(err, ErrProtocol) || errors.Is(err, ErrRecoveryRequired) {
+		if errors.Is(err, ErrCredentials) || errors.Is(err, ErrProtocol) || errors.Is(err, ErrRecoveryRequired) || errors.Is(err, ErrSessionClose) {
 			update(Failed)
 			return result, err
 		}
