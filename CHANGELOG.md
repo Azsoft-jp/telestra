@@ -6,4 +6,6 @@ Telestraへ名称を統一し、CLI、npmパッケージ、Go import、TELESTRA_
 
 Phase 00ではMock Tuner、原本チャンク、Fake Storage、模擬変換、契約試験を追加した。Phase 01ではローカルWorker/D1/DOの認証とGoの署名付きWSS、再接続、永続履歴を実装した。本体の残作業と検証範囲は[実装状況](docs/phase-01-progress.md)にある。
 
+Goのjoin/rotateをローカルWorkerへ接続し、新資格でのWSS接続、応答喪失時の旧資格の隔離、管理者による再参加を追加した。常駐中の自動更新と本番の鍵保管は未実装である。
+
 JWT用途、Schema ID、v1のwire形式と永続履歴は名称変更でも維持する。旧npm名・Go import・内部環境変数は未公開の開発用であり、新しい名称を使う。既存のnpm run mockは継続する。安定版Releaseはまだ作成していない。

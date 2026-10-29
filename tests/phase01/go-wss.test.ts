@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { exportJWK } from "jose";
-import { fixture, tenantId } from "./helper.ts";
+import { fixture, tenantId, device } from "./helper.ts";
 import type { Fixture } from "./helper.ts";
 import { enroll } from "./socket.ts";
 import type { Enrolled } from "./socket.ts";
@@ -61,6 +61,7 @@ function tlsMaterial(): { certificate: string; key: string } {
 }
 
 interface Progress {
+  generation?: number;
   state?: string;
   attempt?: number;
   done?: boolean;
@@ -72,7 +73,10 @@ interface Progress {
 // 子プロセスの出力は状態だけを受け付け、サイズ上限と有限の待機を設ける。
 async function agent(
   context: Fixture,
-  enrolled: Enrolled,
+  enrolled: Pick<Enrolled, "target"> & {
+    credential?: Enrolled["credential"];
+    joinCode?: string;
+  },
   certificate: string,
 ) {
   const key = await exportJWK(enrolled.target.privateKey);
@@ -129,6 +133,7 @@ async function agent(
             (field) =>
               ![
                 "state",
+                "generation",
                 "attempt",
                 "done",
                 "attempts",
@@ -146,7 +151,7 @@ async function agent(
   });
   child.stdin.end(
     JSON.stringify({
-      mode: "run",
+      mode: enrolled.joinCode ? "provision-run" : "run",
       endpoint: endpoint.toString(),
       rootPEM: certificate,
       issuer: context.bindings.TELESTRA_CONTROL_ISSUER,
@@ -157,7 +162,8 @@ async function agent(
         Environment: "development",
         Role: "tuner",
       },
-      credential: enrolled.credential.accessToken,
+      credential: enrolled.credential?.accessToken ?? "",
+      joinCode: enrolled.joinCode ?? "",
       privateSeed: key.d,
       deviceKeyID: enrolled.target.publicJwk.kid,
     }),
@@ -180,7 +186,10 @@ async function agent(
     wait,
     // 失敗時もGoを終了させ、Miniflareを破棄する前に接続を回収する。
     close: async () => {
-      if (!ended) child.kill("SIGTERM");
+      // 完了通知後はGoがsignal handlerを解放している場合があるため、SIGTERMを重ねない。
+      // まだ実行中の場合だけ中断し、通知済みの場合も5秒の終了期限は維持する。
+      if (!ended && !records.some((record) => record.done === true))
+        child.kill("SIGTERM");
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {
         await Promise.race([
@@ -204,6 +213,75 @@ async function agent(
     },
   };
 }
+
+scenario(
+  "NODE-01",
+  "go-join-rotate-wss",
+  "loopback-tls-workerd-go-provision-v1",
+  "Goが一回限りの参加権利と端末署名でjoin/rotateし、新世代資格でWSSへ接続する",
+  async () => {
+    const tls = tlsMaterial();
+    const context = await fixture(tls);
+    let node: Awaited<ReturnType<typeof agent>> | undefined;
+    try {
+      const target = await device("tuner-go-provision-01");
+      const operator = await context.mint("operator-local");
+      assert.equal((await context.register(target, operator)).status, 201);
+      const joinCode = await context.challenge(target, operator);
+      node = await agent(context, { target, joinCode }, tls.certificate);
+      const joined = await node.wait((record) => record.state === "joined");
+      assert.ok((joined.generation ?? 0) > 0);
+      const rotated = await node.wait((record) => record.state === "rotated");
+      assert.equal(rotated.generation, (joined.generation ?? 0) + 1);
+      await node.wait((record) => record.state === "connected");
+      const row = await context.database
+        .prepare(
+          "SELECT credential_version,session_epoch,status FROM nodes WHERE node_id=?",
+        )
+        .bind(target.nodeId)
+        .first<{
+          credential_version: number;
+          session_epoch: number;
+          status: string;
+        }>();
+      assert.deepEqual(row, {
+        credential_version: rotated.generation,
+        session_epoch: 1,
+        status: "active",
+      });
+      const events = await context.database
+        .prepare(
+          "SELECT action FROM identity_audit WHERE node_id=? AND action IN ('node.join','node.rotate') ORDER BY action",
+        )
+        .bind(target.nodeId)
+        .all<{ action: string }>();
+      assert.deepEqual(
+        events.results.map((value) => value.action),
+        ["node.join", "node.rotate"],
+      );
+      assert.equal(
+        (
+          await context.browser(`/nodes/${target.nodeId}/revoke`, operator, {
+            method: "POST",
+            body: {},
+          })
+        ).status,
+        200,
+      );
+      assert.equal(
+        (await node.wait((record) => record.done === true)).code,
+        "credentials",
+      );
+      assert.equal(context.egress, 0);
+    } finally {
+      try {
+        await node?.close();
+      } finally {
+        await context.close();
+      }
+    }
+  },
+);
 
 scenario(
   "NODE-01",

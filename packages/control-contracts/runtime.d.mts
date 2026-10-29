@@ -4,6 +4,7 @@ export declare function RegisterNode(value: unknown): boolean;
 export declare function JoinChallenge(value: unknown): boolean;
 export declare function JoinNode(value: unknown): boolean;
 export declare function RotateNode(value: unknown): boolean;
+export declare function CredentialResponse(value: unknown): boolean;
 export declare function UserClaims(value: unknown): boolean;
 export declare function NodeClaims(value: unknown): boolean;
 export declare function DeviceProof(value: unknown): boolean;

@@ -38,6 +38,7 @@ type request struct {
 	Keys        []wire.PublicJWK `json:"keys"`
 	Identity    wire.Identity    `json:"identity"`
 	Credential  string           `json:"credential"`
+	JoinCode    string           `json:"joinCode"`
 	PrivateSeed string           `json:"privateSeed"`
 	DeviceKeyID string           `json:"deviceKeyID"`
 }
@@ -96,7 +97,7 @@ func run() (result error) {
 		return tlsMaterial()
 	}
 	endpoint, err := url.Parse(input.Endpoint)
-	if err != nil || input.Mode != "run" || !net.ParseIP(endpoint.Hostname()).IsLoopback() || endpoint.Port() == "" || len(input.RootPEM) > 8192 {
+	if err != nil || (input.Mode != "run" && input.Mode != "provision-run") || !net.ParseIP(endpoint.Hostname()).IsLoopback() || endpoint.Port() == "" || len(input.RootPEM) > 8192 {
 		return control.ErrProtocol
 	}
 	roots := x509.NewCertPool()
@@ -129,14 +130,48 @@ func run() (result error) {
 		return err
 	}
 	defer func() { result = errors.Join(result, journal.Close()) }()
-	client, err := control.NewClient(control.ClientConfig{Transport: transport, Verifier: verifier, Identity: input.Identity, Credential: input.Credential, DeviceKey: ed25519.NewKeyFromSeed(seed), DeviceKeyID: input.DeviceKeyID, Journal: journal, AgentVersion: "phase01-local-fixture"})
-	if err != nil {
-		return err
-	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	ctx, cancel := context.WithTimeout(ctx, 90*time.Second)
 	defer cancel()
+	if input.Mode == "provision-run" {
+		// 管理者は公開鍵登録と参加権利の発行だけを担当し、join/rotateの署名とHTTP通信はGoで行う。
+		if input.Credential != "" {
+			return control.ErrProtocol
+		}
+		provisioner, err := control.NewProvisioner(control.ProvisionConfig{Endpoint: "https://" + endpoint.Host, Roots: roots, Verifier: verifier, Identity: input.Identity, DeviceKey: ed25519.NewKeyFromSeed(seed), DeviceKeyID: input.DeviceKeyID})
+		if err != nil {
+			return err
+		}
+		defer provisioner.Close()
+		if err := provisioner.Join(ctx, input.JoinCode); err != nil {
+			return err
+		}
+		_, joined, err := provisioner.Current()
+		if err != nil {
+			return err
+		}
+		if err := emit(map[string]any{"state": "joined", "generation": joined.Version}); err != nil {
+			return err
+		}
+		if err := provisioner.Rotate(ctx); err != nil {
+			return err
+		}
+		credential, claims, err := provisioner.Current()
+		if err != nil {
+			return err
+		}
+		input.Credential = credential
+		if err := emit(map[string]any{"state": "rotated", "generation": claims.Version}); err != nil {
+			return err
+		}
+	} else if input.JoinCode != "" {
+		return control.ErrProtocol
+	}
+	client, err := control.NewClient(control.ClientConfig{Transport: transport, Verifier: verifier, Identity: input.Identity, Credential: input.Credential, DeviceKey: ed25519.NewKeyFromSeed(seed), DeviceKeyID: input.DeviceKeyID, Journal: journal, AgentVersion: "phase01-local-fixture"})
+	if err != nil {
+		return err
+	}
 	var outputErr error
 	outcome, runErr := control.Run(ctx, control.DefaultPolicy(), control.Dependencies{Dial: client.Dial, Observe: func(state control.State, attempt int) {
 		if err := emit(map[string]any{"state": state, "attempt": attempt}); err != nil {

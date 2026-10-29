@@ -92,7 +92,7 @@ func TestReconnectAndRelease(t *testing.T) {
 }
 
 func TestRetryLimitAndPermanentFailure(t *testing.T) {
-	for _, cause := range []error{ErrCredentials, ErrProtocol, errors.New("通信断")} {
+	for _, cause := range []error{ErrCredentials, ErrProtocol, ErrRecoveryRequired, errors.Join(ErrRecoveryRequired, ErrTransport), errors.New("通信断")} {
 		calls := 0
 		result, err := Run(context.Background(), Policy{time.Second, time.Second, 3}, Dependencies{
 			Dial:   func(context.Context) (Session, error) { calls++; return nil, cause },
@@ -100,7 +100,7 @@ func TestRetryLimitAndPermanentFailure(t *testing.T) {
 			Random: func() (float64, error) { return 0.5, nil },
 		})
 		expected := 1
-		if cause != ErrCredentials && cause != ErrProtocol {
+		if cause != ErrCredentials && cause != ErrProtocol && !errors.Is(cause, ErrRecoveryRequired) {
 			expected = 3
 			if !errors.Is(err, ErrUnavailable) {
 				t.Fatal("再試行上限の失敗を返していない")
