@@ -61,6 +61,21 @@ function empty(value: unknown): void {
       "この操作には空のJSONを指定してください。",
     );
 }
+// 世代は安全な整数の範囲で進める。上限からの巻き戻しや、自動的なNode ID再利用は行わない。
+function assertGenerationAdvance(row: NodeRow, reauthorize: boolean): void {
+  if (
+    !Number.isSafeInteger(row.credential_version) ||
+    row.credential_version < 1 ||
+    row.credential_version >= Number.MAX_SAFE_INTEGER ||
+    (reauthorize && row.authorization_epoch >= Number.MAX_SAFE_INTEGER)
+  )
+    throw new BoundaryError(
+      "GENERATION_EXHAUSTED",
+      "Nodeの世代を更新できません。管理者による確認が必要です。",
+      409,
+    );
+}
+
 async function credential(env: Env, row: NodeRow): Promise<Response> {
   // 現在有効な世代だけに短命資格を発行し、HTTP応答のキャッシュを禁止する。
   if (row.status !== "active") throw authFailure();
@@ -161,10 +176,11 @@ async function route(request: Request, env: Env): Promise<Response> {
     const row = await nodeRow(env, input.nodeId);
     if (row.status === "revoked") throw authFailure();
     await proof(env, row, input.proof, "join", input.code);
+    assertGenerationAdvance(row, true);
     const hash = await digest(input.code);
     const results = await env.TELESTRA_DB.batch([
       env.TELESTRA_DB.prepare(
-        "UPDATE nodes SET status='active',credential_version=credential_version+1 WHERE environment=? AND tenant_id=? AND node_id=? AND status!='revoked' AND EXISTS(SELECT 1 FROM node_joins j WHERE j.environment=nodes.environment AND j.tenant_id=nodes.tenant_id AND j.node_id=nodes.node_id AND j.code_hash=? AND j.expires_at>?)",
+        "UPDATE nodes SET status='active',credential_version=credential_version+1,authorization_epoch=authorization_epoch+1 WHERE environment=? AND tenant_id=? AND node_id=? AND status!='revoked' AND credential_version<9007199254740991 AND authorization_epoch<9007199254740991 AND EXISTS(SELECT 1 FROM node_joins j WHERE j.environment=nodes.environment AND j.tenant_id=nodes.tenant_id AND j.node_id=nodes.node_id AND j.code_hash=? AND j.expires_at>?)",
       ).bind(
         env.TELESTRA_ENVIRONMENT,
         env.TELESTRA_TENANT_ID,
@@ -191,8 +207,10 @@ async function route(request: Request, env: Env): Promise<Response> {
     const input = validateControl("RotateNode", await readJsonBody(request));
     await rateLimit(env, `rotate:${identity.row.node_id}`, 12);
     await proof(env, identity.row, input.proof, "rotate", identity.claims.jti);
+    assertGenerationAdvance(identity.row, false);
+    // 通常rotateは認可を変更しない。録画許可の世代へ資格の寿命を流用しない。
     const changed = await env.TELESTRA_DB.prepare(
-      "UPDATE nodes SET credential_version=credential_version+1 WHERE environment=? AND tenant_id=? AND node_id=? AND status='active' AND credential_version=?",
+      "UPDATE nodes SET credential_version=credential_version+1 WHERE environment=? AND tenant_id=? AND node_id=? AND status='active' AND credential_version=? AND credential_version<9007199254740991",
     )
       .bind(
         env.TELESTRA_ENVIRONMENT,
@@ -351,8 +369,9 @@ async function route(request: Request, env: Env): Promise<Response> {
     empty(await readJsonBody(request));
     const nodeId = revocation[1];
     await nodeRow(env, nodeId);
+    // 失効状態と両世代を同じUPDATEで確定する。上限でも失効を拒否せず、値を巻き戻さない。
     const changed = await env.TELESTRA_DB.prepare(
-      "UPDATE nodes SET status='revoked',credential_version=credential_version+1 WHERE environment=? AND tenant_id=? AND node_id=? AND status!='revoked'",
+      "UPDATE nodes SET status='revoked',credential_version=MIN(credential_version+1,9007199254740991),authorization_epoch=MIN(authorization_epoch+1,9007199254740991) WHERE environment=? AND tenant_id=? AND node_id=? AND status!='revoked'",
     )
       .bind(env.TELESTRA_ENVIRONMENT, env.TELESTRA_TENANT_ID, nodeId)
       .run();

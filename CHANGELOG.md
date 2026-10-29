@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+D1のNode認可世代をCredential世代から分離する。通常rotateで維持し、明示的なjoin・失効で進める。既存DBの追加移行、上限、書込失敗、競合と再起動の合成試験を追加する。署名付きpolicyと実録画は有効にしない。
+
 ユーザーが選択したCapture Permit v2のCompact JWSと認可世代の分離を採用する。専用Schema、Go・TypeScript検証器、Node.js・Go・実workerdの相互試験を追加する。v1の制御命令は維持し、policy永続化とStorage Grantを検証するまで録画実行を有効にしない。
 
 Telestraへ名称を統一し、CLI、npmパッケージ、Go import、TELESTRA_構成を整理する。MITを採用し、Azsoft-jpのPUBLIC/PRIVATE運用、導入4モード、README、ガバナンス、公開前検査を追加する。Demoは合成結果を表示するローカル専用UIで、実放送や映像再生を含まない。

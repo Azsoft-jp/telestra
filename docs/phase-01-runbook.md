@@ -66,3 +66,7 @@ Nodeの`/agent`はBearer資格と端末鍵の一回限りの接続証明で認�
 ## 両Nodeの制御契約
 
 [Phase 01の条件照合](phase-01-role-audit.md)で実装・試験・未実装を確認する。EncodeNode役の試験Goは変換能力なし・同時処理0件で接続する。15秒のHeartbeatと約10秒へ早めた更新を区別し、製品Agentやハードウェア能力検出の確認へ読み替えない。
+
+## 認可世代とDB移行
+
+ローカルfixtureは固定順で0001・0002を適用する。移行専用試験だけが0001で開始し、既存データを保持した0002移行と未移行時の拒否を確認する。再起動では移行を繰り返さない。本番へ適用するコマンドは用意していない。上限・失敗・復旧の検証範囲は[Node認可世代](node-authorization-epoch.md)と[ADR-027](architecture/decisions/ADR-027-node-authorization-epoch.md)を参照する。
