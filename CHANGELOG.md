@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+独立したCapture Policy v2のSchema・署名・検証、D1 snapshotのCAS保存と現在値照合、端末証明付きHTTPS取得を追加する。Go・Node.js・workerdの相互試験を行い、policyとPermitのID・世代・発行者を照合する。Nodeの確定保存と実録画は有効にしない。
+
 D1のNode認可世代をCredential世代から分離する。通常rotateで維持し、明示的なjoin・失効で進める。既存DBの追加移行、上限、書込失敗、競合と再起動の合成試験を追加する。署名付きpolicyと実録画は有効にしない。
 
 ユーザーが選択したCapture Permit v2のCompact JWSと認可世代の分離を採用する。専用Schema、Go・TypeScript検証器、Node.js・Go・実workerdの相互試験を追加する。v1の制御命令は維持し、policy永続化とStorage Grantを検証するまで録画実行を有効にしない。

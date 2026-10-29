@@ -2,6 +2,7 @@
 import { validateControl } from "../../packages/control-contracts/index.ts";
 import { BoundaryError } from "../../packages/contracts/error.ts";
 import { readJsonBody } from "./body.ts";
+import { issueCapturePolicy } from "./capture-policy.ts";
 import {
   digest,
   parseJson,
@@ -166,6 +167,46 @@ async function route(request: Request, env: Env): Promise<Response> {
     const identity = await node(request, env);
     return registry(env, identity.row.node_id).fetch(
       new Request("https://registry.example.invalid/connect", request),
+    );
+  }
+  if (
+    request.method === "POST" &&
+    url.pathname === "/agent/capture-policy/v2"
+  ) {
+    if (url.protocol !== "https:")
+      throw new BoundaryError(
+        "TLS_REQUIRED",
+        "録画policyはHTTPSで取得してください。",
+        400,
+      );
+    const identity = await node(request, env);
+    if (identity.row.node_role !== "tuner")
+      throw new BoundaryError(
+        "FORBIDDEN",
+        "このNodeには録画policyを発行できません。",
+        403,
+      );
+    const input = validateControl(
+      "FetchCapturePolicy",
+      await readJsonBody(request),
+    );
+    await rateLimit(env, `capture-policy:${identity.row.node_id}`, 12);
+    await proof(
+      env,
+      identity.row,
+      input.proof,
+      "capture-policy",
+      `capture-policy.v2\0${input.recordingId}\0${identity.claims.jti}`,
+    );
+    const policy = await issueCapturePolicy(
+      env,
+      identity.row.node_id,
+      identity.claims.credentialVersion,
+      input.recordingId,
+      nowSeconds,
+    );
+    return json(
+      validateControl("CapturePolicyResponse", { schemaVersion: 2, policy }),
     );
   }
   if (request.method === "POST" && url.pathname === "/nodes/join") {

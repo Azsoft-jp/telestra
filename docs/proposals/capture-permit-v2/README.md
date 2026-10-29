@@ -73,4 +73,4 @@ GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off npm run check
 | 秘密・公開情報 | 検出0件 | Gitleaksの作業ツリーと全ref履歴、公開前検査の260ファイルと履歴。検出値をログへ出さない |
 | ブラウザ | 今回はローカルで再実行していない | Web・API・認証ライブラリの製品コードは変更せず、CIのbrowser jobで回帰を確認する |
 
-日本語コメントと説明はYomiyasuで確認する。DESIGNの結果をSEC/REL/MEDの合格として数えない。実チューナー、実録画、実クラウド、製品のPermit検証器、予約実行、canonical選定、鍵・policy・時計の永続化は未実装または未検証である。
+日本語コメントと説明はYomiyasuで確認する。DESIGNの結果をSEC/REL/MEDの合格として数えない。実チューナー、実録画、実クラウド、予約実行、canonical選定、鍵・Node policy・時計の永続化は未実装または未検証である。[Permit検証器](../../capture-permit-v2-verification.md)と[policy発行・取得](../../signed-capture-policy.md)は独立した実装記録で範囲を確認する。

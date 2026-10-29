@@ -2,7 +2,7 @@
 
 添付ZIPとの差分。Phase 00、Phase 01、Telestraの名称・導入・公開整備を含む。依存物、検証成果物、Git内部、秘密値、一時状態を除外する。PRIVATE側のファイルは別リポジトリで管理する。
 
-変更6件、追加239件、削除0件。
+変更6件、追加257件、削除0件。
 
 ## 既存ファイルの変更
 
@@ -14,6 +14,25 @@
 - [scripts/validate_package.py](../scripts/validate_package.py)
 
 ## 追加ファイル
+
+- [apps/control/capture-policy.ts](../apps/control/capture-policy.ts)
+- [apps/control/migrations/0003-capture-policies.sql](../apps/control/migrations/0003-capture-policies.sql)
+- [contracts/capture-policy-v2.schema.json](../contracts/capture-policy-v2.schema.json)
+- [docs/architecture/decisions/ADR-028-signed-capture-policy.md](../docs/architecture/decisions/ADR-028-signed-capture-policy.md)
+- [docs/signed-capture-policy.md](../docs/signed-capture-policy.md)
+- [nodes/tuner/cmd/policyfixture/main.go](../nodes/tuner/cmd/policyfixture/main.go)
+- [nodes/tuner/control/capture_policy.go](../nodes/tuner/control/capture_policy.go)
+- [nodes/tuner/control/capture_policy_test.go](../nodes/tuner/control/capture_policy_test.go)
+- [nodes/tuner/wire/policy_v2.go](../nodes/tuner/wire/policy_v2.go)
+- [nodes/tuner/wire/policy_v2_test.go](../nodes/tuner/wire/policy_v2_test.go)
+- [packages/capture-permit/policy.ts](../packages/capture-permit/policy.ts)
+- [packages/capture-permit/sign-policy.ts](../packages/capture-permit/sign-policy.ts)
+- [packages/capture-permit/signature.ts](../packages/capture-permit/signature.ts)
+- [tests/capture-policy.test.ts](../tests/capture-policy.test.ts)
+- [tests/fixtures/policy-cases.ts](../tests/fixtures/policy-cases.ts)
+- [tests/fixtures/policy-worker.ts](../tests/fixtures/policy-worker.ts)
+- [tests/fixtures/policy.ts](../tests/fixtures/policy.ts)
+- [tests/phase01/capture-policy.test.ts](../tests/phase01/capture-policy.test.ts)
 
 - [apps/control/migrations/0002-authorization-epoch.sql](../apps/control/migrations/0002-authorization-epoch.sql)
 - [tests/phase01/authorization-epoch.test.ts](../tests/phase01/authorization-epoch.test.ts)

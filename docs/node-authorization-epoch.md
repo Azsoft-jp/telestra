@@ -2,6 +2,8 @@
 
 [ADR-027](architecture/decisions/ADR-027-node-authorization-epoch.md)に基づき、D1の認可世代を短命Credentialから分離した。[ADR-026](architecture/decisions/ADR-026-capture-permit-v2-proposal.md)の選択をサーバー側の実状態へ反映する変更で、署名付きpolicyと実録画の完成ではない。
 
+
+後続変更で[署名付きpolicyの発行・取得](signed-capture-policy.md)を追加した。以下の未実装記述は当該差分の範囲を示す。Nodeの確定保存・実録画は引き続き未実装である。
 ## 実装
 
 [追加移行](../apps/control/migrations/0002-authorization-epoch.sql)でnodesへauthorization_epochを加えた。初期値は1、初回joinで2となる。再参加と失効で進め、通常rotateやWSSの接続世代更新では変更しない。状態・資格・認可の更新は同じrowで確定する。

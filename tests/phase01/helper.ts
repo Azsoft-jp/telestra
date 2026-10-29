@@ -24,12 +24,24 @@ export type Device = Awaited<ReturnType<typeof device>>;
 export async function fixture(
   tls?: { certificate: string; key: string },
   browserOrigins: readonly string[] = [origin],
-  migrationVersion: 1 | 2 = 2,
+  migrationVersion: 1 | 2 | 3 = 3,
+  capturePolicyEnabled = false,
 ) {
   const directory = await mkdtemp(join(tmpdir(), "tv-phase01-"));
   const oidc = await device("oidc-local");
   const signer = await device("control-local");
+  const policySigner = await device("capture-policy-local");
   const bindings = {
+    ...(capturePolicyEnabled
+      ? {
+          TELESTRA_CAPTURE_POLICY_PRIVATE_JWK: JSON.stringify({
+            ...(await exportJWK(policySigner.privateKey)),
+            kid: policySigner.publicJwk.kid,
+            alg: "Ed25519",
+          }),
+          TELESTRA_CAPTURE_POLICY_MAX_LIFETIME_SECONDS: "3600",
+        }
+      : {}),
     TELESTRA_ENVIRONMENT: "development",
     TELESTRA_TENANT_ID: tenantId,
     TELESTRA_ALLOWED_ORIGINS: JSON.stringify(browserOrigins),
@@ -77,6 +89,7 @@ export async function fixture(
   for (const migration of [
     "0001-identity.sql",
     "0002-authorization-epoch.sql",
+    "0003-capture-policies.sql",
   ].slice(0, migrationVersion)) {
     const sql = await readFile(`apps/control/migrations/${migration}`, "utf8");
     const statements = sql
@@ -168,7 +181,7 @@ export async function fixture(
     });
   const deviceProof = async (
     target: Device,
-    purpose: "join" | "rotate" | "connect",
+    purpose: "join" | "rotate" | "connect" | "capture-policy",
     challenge: string,
     overrides: Record<string, unknown> = {},
   ) =>
@@ -229,6 +242,7 @@ export async function fixture(
   return {
     bindings,
     signer,
+    policySigner,
     mint,
     // Mock IdPのcode交換でだけ使い、ID TokenをAPIのAccess Tokenと混同しない。
     mintIdToken: async (
