@@ -32,6 +32,30 @@ scenario(
       ),
       [],
     );
+    assert.deepEqual(
+      scanText(
+        "history:metadata",
+        "GitHub <" + "noreply" + "@" + "github.com>",
+      ),
+      [],
+    );
+    assert.deepEqual(
+      scanText(
+        "history:metadata",
+        "dependabot <" + "support" + "@" + "github.com>",
+      ),
+      [],
+    );
+    assert.ok(
+      scanText("history:metadata", "personal" + "@" + "github.com").some(
+        (x) => x.rule === "EMAIL_REVIEW",
+      ),
+    );
+    assert.ok(
+      scanText("history:metadata", "person" + "@" + "mail.example.org").some(
+        (x) => x.rule === "EMAIL_REVIEW",
+      ),
+    );
     const directory = mkdtempSync(join(tmpdir(), "telestra-history-"));
     const git = (...args: string[]) =>
       execFileSync(

@@ -2,7 +2,7 @@
 
 添付ZIPとの差分。Phase 00、Phase 01、Telestraの名称・導入・公開整備を含む。依存物、検証成果物、Git内部、秘密値、一時状態を除外する。PRIVATE側のファイルは別リポジトリで管理する。
 
-変更6件、追加163件、削除0件。
+変更6件、追加164件、削除0件。
 
 ## 既存ファイルの変更
 
@@ -50,6 +50,7 @@
 - [apps/web/package.json](../apps/web/package.json)
 - [assets/brand/demo-mock.svg](../assets/brand/demo-mock.svg)
 - [assets/brand/icon.svg](../assets/brand/icon.svg)
+- [assets/brand/logo-dark.svg](../assets/brand/logo-dark.svg)
 - [assets/brand/logo.svg](../assets/brand/logo.svg)
 - [assets/brand/og.svg](../assets/brand/og.svg)
 - [contracts/control.schema.json](../contracts/control.schema.json)
