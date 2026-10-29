@@ -34,6 +34,8 @@ macOS arm64、Go 1.26.10、Node.js 24.22.1でnpm run checkが終了コード0と
 
 Gitleaksの作業ツリー検査とgovulncheckは検出0だった。履歴とGitHub Actionsは公開PRの検査でも確認する。証跡はartifactsのPhase別レポートと実行ログへ保存し、秘密値を含むIPCを保存しない。日本語コメントと文書にはyomiyasuの静的検査と差分確認を適用した。
 
+最初のLinux CIでは、push用の全検査は成功し、PR用のWSS試験が1件失敗した。Goが完了通知を出した後、親試験がSIGTERMを重ね、既にsignal handlerを解放したプロセスがsignal終了する競合だった。完了通知後は自然終了を待ち、まだ実行中の場合だけ中断するよう修正した。5秒の終了期限と異常終了の拒否は維持する。失敗したCIは[初回PR検査](https://github.com/Azsoft-jp/telestra/actions/runs/40815960913)に残す。
+
 ## 未実装と次の作業
 
 資格と最後の確認世代はメモリ内で保持する。本番の鍵保管・配布、再起動をまたぐ資格と世代の復旧、常駐中の期限前更新とWSS接続の調停、実EncodeNode、実環境WSSは未実装または未検証である。現在資格を受け取った既存Clientを自動更新する機能もまだない。呼出元が取得済みの資格のコピーをProvisionerから回収することはできず、既存WSSの終了は呼出元が扱う必要がある。期限後の継続運用や無人復旧を保証しない。

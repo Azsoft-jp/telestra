@@ -186,7 +186,10 @@ async function agent(
     wait,
     // 失敗時もGoを終了させ、Miniflareを破棄する前に接続を回収する。
     close: async () => {
-      if (!ended) child.kill("SIGTERM");
+      // 完了通知後はGoがsignal handlerを解放している場合があるため、SIGTERMを重ねない。
+      // まだ実行中の場合だけ中断し、通知済みの場合も5秒の終了期限は維持する。
+      if (!ended && !records.some((record) => record.done === true))
+        child.kill("SIGTERM");
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {
         await Promise.race([
