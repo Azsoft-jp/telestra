@@ -12,6 +12,8 @@ Phase 01のローカルHTTP・DO WebSocket試験は[実装状況](phase-01-progr
 
 [popupとChromiumの記録](phase-01-popup.md)で、SEC-04・CORE-02とauth fixtureのUX-08を追加した。UIの一部、loopback TLS、合成IdPの範囲であり、Phase 05全体や実IdPの合格ではない。
 
+[本文読み取りの記録](phase-01-body-limits.md)で、CORE-02・SEC-10の5秒・8KiB・中断を追加検証する。認証前の負荷、API全体や本番のDoS耐性へ読み替えない。
+
 | ID | 合格条件 | 推奨Phase |
 | --- | --- | --- |
 | CORE-01 | Mock Tuner/Storeで権利問題なくend-to-end実行 | 00 |

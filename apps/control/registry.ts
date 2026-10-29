@@ -25,6 +25,7 @@ import {
   authFailure,
 } from "../../packages/identity/index.ts";
 import { BoundaryError } from "../../packages/contracts/error.ts";
+import { readJsonBody } from "./body.ts";
 
 interface Session extends ChannelContext {
   nodeRole: "tuner" | "encoder";
@@ -105,7 +106,7 @@ export class NodeRegistry {
             );
           const input = validateControl(
             "DispatchCommand",
-            parseJson(await request.text(), 8192),
+            await readJsonBody(request),
           );
           return await this.dispatch(session, input);
         }

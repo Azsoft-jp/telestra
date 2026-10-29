@@ -58,3 +58,7 @@ Workerには`development`以外を拒否するガードがあり、本番用の�
 Nodeの`/agent`はBearer資格と端末鍵の一回限りの接続証明で認証し、Originを持つBrowser接続を拒否する。利用者の管理操作は許可Originとoperator/adminを要求する。接続状態は`/nodes/:nodeId/connection`、限定命令は`POST /nodes/:nodeId/commands`で扱う。HTTP 202は送信待ちへの登録を表し、録画の実行成功を表さない。
 
 試験Nodeは`capture.start/cancel`を実行しない。構造だけのPermitや模擬ACKを、録画原本・字幕・音声の保存成功として扱わない。汎用Shell、任意URL取得、任意ファイル書込、動画転送をこの経路へ追加しない。
+
+## 制御JSONの受信失敗
+
+[本文の上限と試験](phase-01-body-limits.md)で、408・413・415・400と回復条件を確認する。ローカルfixtureはenable_request_signalを明記し、本文の受信開始から5秒で期限切れとする。再送の前に状態をAPIで照合し、応答喪失を未実行と推定しない。圧縮を解除し、内容と長さを確認する。

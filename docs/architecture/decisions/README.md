@@ -16,3 +16,5 @@
 - [ADR-022-node-process-restart-fixture](ADR-022-node-process-restart-fixture.md)
 - [ADR-023-browser-pkce-memory-session](ADR-023-browser-pkce-memory-session.md)
 - [ADR-024-auth-popup-fixture](ADR-024-auth-popup-fixture.md)
+
+- [ADR-025-control-body-deadline](ADR-025-control-body-deadline.md)

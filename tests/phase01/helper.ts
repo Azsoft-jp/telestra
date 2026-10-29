@@ -55,6 +55,8 @@ export async function fixture(
     modules: true,
     scriptPath: "artifacts/control/worker.mjs",
     compatibilityDate: "2026-07-30",
+    // Request.signalでクライアント中断を受け、本文の待機と後続更新を止める。
+    compatibilityFlags: ["enable_request_signal"],
     bindings,
     d1Databases: { TELESTRA_DB: "phase01-local" },
     d1Persist: join(directory, "d1"),

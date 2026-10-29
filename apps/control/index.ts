@@ -1,6 +1,7 @@
 // ローカルWorkerでNode参加と利用者の操作を検証し、永続状態はD1へ保存する。
 import { validateControl } from "../../packages/control-contracts/index.ts";
 import { BoundaryError } from "../../packages/contracts/error.ts";
+import { readJsonBody } from "./body.ts";
 import {
   digest,
   parseJson,
@@ -39,51 +40,6 @@ function json(value: unknown, status = 200): Response {
       "X-Content-Type-Options": "nosniff",
     },
   });
-}
-async function body(request: Request): Promise<unknown> {
-  // 宣言された長さだけを信用せず、実際に読み取ったバイト数にも上限を適用する。
-  if (
-    request.headers.get("Content-Type")?.split(";")[0]?.trim() !==
-    "application/json"
-  )
-    throw new BoundaryError(
-      "CONTENT_TYPE",
-      "JSON形式で送信してください。",
-      415,
-    );
-  const length = request.headers.get("Content-Length");
-  if (length !== null && (!/^\d+$/.test(length) || Number(length) > 8192))
-    throw new BoundaryError("TOO_LARGE", "データが上限を超えています。", 413);
-  if (!request.body)
-    throw new BoundaryError("INVALID_JSON", "データがありません。");
-  const reader = request.body.getReader();
-  const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: false });
-  let raw = "";
-  let bytes = 0;
-  try {
-    while (true) {
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      bytes += chunk.value.byteLength;
-      if (bytes > 8192) {
-        await reader.cancel();
-        throw new BoundaryError(
-          "TOO_LARGE",
-          "データが上限を超えています。",
-          413,
-        );
-      }
-      raw += decoder.decode(chunk.value, { stream: true });
-    }
-    raw += decoder.decode();
-  } catch (error) {
-    if (error instanceof BoundaryError) throw error;
-    throw new BoundaryError(
-      "INVALID_JSON",
-      "データの文字形式を確認してください。",
-    );
-  }
-  return parseJson(raw, 8192);
 }
 function noOrigin(request: Request): void {
   if (request.headers.has("Origin"))
@@ -200,7 +156,7 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (request.method === "POST" && url.pathname === "/nodes/join") {
     // 参加権利をD1の条件付き更新と同じbatchで消費し、再利用による再発行を防ぐ。
     noOrigin(request);
-    const input = validateControl("JoinNode", await body(request));
+    const input = validateControl("JoinNode", await readJsonBody(request));
     await rateLimit(env, `join:${input.nodeId}`, 12);
     const row = await nodeRow(env, input.nodeId);
     if (row.status === "revoked") throw authFailure();
@@ -232,7 +188,7 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (request.method === "POST" && url.pathname === "/nodes/rotate") {
     // 旧資格と端末の署名の両方を要求し、世代更新後は旧Tokenを無効にする。
     const identity = await node(request, env);
-    const input = validateControl("RotateNode", await body(request));
+    const input = validateControl("RotateNode", await readJsonBody(request));
     await rateLimit(env, `rotate:${identity.row.node_id}`, 12);
     await proof(env, identity.row, input.proof, "rotate", identity.claims.jti);
     const changed = await env.TELESTRA_DB.prepare(
@@ -280,14 +236,21 @@ async function route(request: Request, env: Env): Promise<Response> {
     // 外側で実読取サイズを制限し、DOにも認証情報と構造化したJSONだけを渡す。
     const input =
       request.method === "POST"
-        ? JSON.stringify(await body(request))
+        ? JSON.stringify(await readJsonBody(request))
         : undefined;
+    const headers = new Headers(request.headers);
+    if (input !== undefined) {
+      // JSONを作り直した本文には、受信時の長さ・圧縮・転送方式を引き継がない。
+      headers.delete("Content-Length");
+      headers.delete("Content-Encoding");
+      headers.delete("Transfer-Encoding");
+    }
     return registry(env, connection[1]).fetch(
       new Request(
         `https://registry.example.invalid/${connection[2] === "connection" ? "status" : "commands"}`,
         {
           method: request.method,
-          headers: request.headers,
+          headers,
           ...(input !== undefined ? { body: input } : {}),
         },
       ),
@@ -302,7 +265,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       expiresAt: actor.expiresAt,
     });
   if (request.method === "POST" && url.pathname === "/sessions/revoke") {
-    empty(await body(request));
+    empty(await readJsonBody(request));
     await env.TELESTRA_DB.prepare(
       "INSERT INTO revoked_tokens(environment,tenant_id,jti,expires_at) VALUES(?,?,?,?) ON CONFLICT DO NOTHING",
     )
@@ -320,7 +283,7 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
   if (request.method === "POST" && url.pathname === "/nodes") {
     role(actor, ["operator", "admin"]);
-    const input = validateControl("RegisterNode", await body(request));
+    const input = validateControl("RegisterNode", await readJsonBody(request));
     const result = await env.TELESTRA_DB.prepare(
       "INSERT INTO nodes(environment,tenant_id,node_id,node_role,public_jwk,status) VALUES(?,?,?,?,?,'pending') ON CONFLICT DO NOTHING",
     )
@@ -353,7 +316,7 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
   if (request.method === "POST" && url.pathname === "/nodes/challenges") {
     role(actor, ["operator", "admin"]);
-    const input = validateControl("JoinChallenge", await body(request));
+    const input = validateControl("JoinChallenge", await readJsonBody(request));
     const row = await nodeRow(env, input.nodeId);
     if (row.status === "revoked")
       throw new BoundaryError(
@@ -385,7 +348,7 @@ async function route(request: Request, env: Env): Promise<Response> {
   );
   if (request.method === "POST" && revocation?.[1]) {
     role(actor, ["operator", "admin"]);
-    empty(await body(request));
+    empty(await readJsonBody(request));
     const nodeId = revocation[1];
     await nodeRow(env, nodeId);
     const changed = await env.TELESTRA_DB.prepare(
@@ -414,7 +377,10 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
   if (request.method === "POST" && url.pathname === "/reservations") {
     role(actor, ["recorder", "admin"]);
-    const input = validateControl("ReservationInput", await body(request));
+    const input = validateControl(
+      "ReservationInput",
+      await readJsonBody(request),
+    );
     const starts = Date.parse(input.startsAt),
       ends = Date.parse(input.endsAt);
     if (

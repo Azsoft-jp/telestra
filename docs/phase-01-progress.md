@@ -101,3 +101,7 @@ Goからjoin/rotateを呼び、更新後の資格でWSSへ接続する実装を�
 ## 認可結果の画面復帰とChromium
 
 [popupの追加実装](phase-01-popup.md)で、実windowのorigin・sourceを照合し、callbackのURLを消して元の画面へ戻す経路を追加した。上記のブラウザ復帰・CORSが未実装という記録のうち、合成IdPとloopback TLSでのChromium試験を補った。全画面のログインUX、モバイルPWA、実IdP、本番KeyProvider、実環境は引き続き未実装または未検証である。
+
+## 制御APIの本文読み取り
+
+[本文期限の追加実装](phase-01-body-limits.md)で、WorkerとDOの読み取りを5秒・8192バイト・16384回に制限し、中断と失敗時の回収要求を加えた。実loopback HTTPで途中停止の408、D1未更新、次の正常要求を確認した。認証前の負荷、API全体の期限、実環境の切断とDoS耐性は未検証である。

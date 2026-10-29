@@ -18,4 +18,6 @@ public clientのS256・state・nonceとメモリ内資格を追加し、Mock IdP
 
 popupでの認可結果復帰と、loopback TLS上の実Chromium試験を追加した。originとWindowProxy、callbackのURL消去、ACK、終了と中断を扱う。合成認証画面を追加し、実IdP・本体UI・PWAは未検証のままとする。
 
+制御APIの本文を全体5秒・8192バイト・16384回に制限し、中断と異常streamを拒否する。DOへ再シリアライズする本文では元の長さ・圧縮・転送方式を引き継がない。本番のDoS耐性は未検証である。
+
 JWT用途、Schema ID、v1のwire形式と永続履歴は名称変更でも維持する。旧npm名・Go import・内部環境変数は未公開の開発用であり、新しい名称を使う。既存のnpm run mockは継続する。安定版Releaseはまだ作成していない。
